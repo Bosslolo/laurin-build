@@ -1,0 +1,94 @@
+# Laptop Development Setup
+# This includes everything needed for local development
+version: '3.8'
+
+services:
+  # Flask Admin Application (Development Mode)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.laptop
+    container_name: laurin_build_admin
+    ports:
+      - "5001:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app:cached  # Hot reload for development
+      - ./instance:/app/instance  # Database files
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - DATABASE_URL=postgresql://user:password@db:5432/db
+      - SECRET_KEY=laptop-dev-secret-key
+      - FLASK_APP_MODE=admin  # Admin mode with dev tools
+    command: flask --app app/wsgi.py run --host=0.0.0.0 --port=5000 --debug
+    restart: unless-stopped
+
+  # Flask User Application (Production Mode)
+  user:
+    build:
+      context: .
+      dockerfile: Dockerfile.laptop
+    container_name: laurin_build_user
+    ports:
+      - "5002:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app:cached  # Hot reload for development
+      - ./instance:/app/instance  # Database files
+    environment:
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
+      - DATABASE_URL=postgresql://user:password@db:5432/db
+      - SECRET_KEY=laptop-dev-secret-key
+      - FLASK_APP_MODE=user  # User mode without dev tools
+    command: flask --app app/wsgi.py run --host=0.0.0.0 --port=5000
+    restart: unless-stopped
+
+  # PostgreSQL Database (for production-like testing)
+  db:
+    image: postgres:16
+    container_name: laurin_build_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d db -h 127.0.0.1"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  # Database Management Tool
+  adminer:
+    image: adminer:4
+    container_name: laurin_build_adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      db:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  # Redis (for future caching/sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: laurin_build_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    driver: local
