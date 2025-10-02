@@ -1,11 +1,15 @@
-from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash, abort
-from .models import roles, beverages, users, consumptions, invoices, beverage_prices
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash, abort, session
+from .models import roles, beverages, users, consumptions, invoices, beverage_prices, daily_prices, display_items
 from . import db
 from datetime import datetime, date
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 import hashlib
 import os
+from .security import (
+    require_admin_auth, require_security_gate, is_admin_mode, 
+    bypass_pin_for_dev, get_security_info, verify_admin_token, SECURITY_GATE_ENABLED
+)
 
 bp = Blueprint("routes", __name__)
 
@@ -85,20 +89,10 @@ def index():
     # Extract just the user objects for template
     sorted_users = [user_role_consumption[0] for user_role_consumption in users_with_consumption]
     
-    # Get top spender by money (all time)
-    top_spender = db.session.query(
-        users.first_name,
-        users.last_name,
-        func.sum(consumptions.quantity * consumptions.unit_price_cents).label('total_spent_cents')
-    ).join(consumptions, users.id == consumptions.user_id)\
-     .group_by(users.id, users.first_name, users.last_name)\
-     .order_by(func.sum(consumptions.quantity * consumptions.unit_price_cents).desc())\
-     .first()
-    
     # Check if we're in admin mode (development mode OR explicitly set to admin)
     is_dev = (os.getenv('FLASK_ENV') == 'development' or 
               os.getenv('FLASK_APP_MODE') == 'admin')
-    return render_template("index.html", users=sorted_users, is_dev=is_dev, top_spender=top_spender)
+    return render_template("index.html", users=sorted_users, is_dev=is_dev)
 
 
 @bp.route("/dev/add_user", methods=["GET", "POST"])
@@ -654,6 +648,20 @@ def entries():
         # Redirect to index if no user_id provided
         return redirect(url_for('routes.index'))
     
+    # Security gate is disabled by default for development
+    # Only apply if explicitly enabled and not bypassed
+    if (SECURITY_GATE_ENABLED and 
+        not session.get('security_gate_passed', False) and 
+        not bypass_pin_for_dev()):
+        return redirect(url_for('routes.security_gate'))
+    
+    # Check for admin bypass
+    if session.get('admin_bypass', False) and session.get('bypass_user_id') == user_id:
+        # Admin bypass - no PIN required
+        pass
+    # PIN verification is now handled by JavaScript on the frontend
+    # No need to redirect back to index with require_pin parameter
+    
     # Fetch the specific user with their role
     user = users.query.join(roles, users.role_id == roles.id).filter(users.id == user_id).first()
     
@@ -989,3 +997,319 @@ def monthly_report():
                          current_year=year,
                          current_month=month,
                          report_date=report_date)
+
+# =============================================================================
+# SECURITY ROUTES - Admin Backdoor and Security Gate
+# =============================================================================
+
+@bp.route("/admin/login")
+def admin_login():
+    """Admin login page for backdoor access"""
+    return render_template("admin_login.html")
+
+@bp.route("/admin/authenticate", methods=["POST"])
+def admin_authenticate():
+    """Authenticate admin access"""
+    token = request.form.get('admin_token', '').strip()
+    
+    if verify_admin_token(token):
+        session['admin_authenticated'] = True
+        session['security_gate_passed'] = True  # Admin bypasses security gate
+        flash('🔐 Admin access granted! You now have full system access.', 'success')
+        return redirect(url_for('routes.index'))
+    else:
+        flash('❌ Invalid admin token. Access denied.', 'error')
+        return redirect(url_for('routes.admin_login'))
+
+@bp.route("/admin/logout")
+def admin_logout():
+    """Logout admin"""
+    session.pop('admin_authenticated', None)
+    session.pop('security_gate_passed', None)
+    flash('👋 Admin session ended.', 'info')
+    return redirect(url_for('routes.index'))
+
+@bp.route("/security-gate")
+def security_gate():
+    """Security gate for unauthorized access"""
+    if session.get('security_gate_passed', False):
+        return redirect(url_for('routes.index'))
+    return render_template("security_gate.html")
+
+@bp.route("/security-gate/verify", methods=["POST"])
+def security_gate_verify():
+    """Verify security gate access"""
+    access_code = request.form.get('access_code', '').strip()
+    
+    # Simple access code (you can make this more complex)
+    valid_codes = ['CSH2024', 'LAURIN', 'ADMIN', 'ACCESS']
+    
+    if access_code.upper() in valid_codes:
+        session['security_gate_passed'] = True
+        flash('✅ Access granted! Welcome to Laurin Build.', 'success')
+        return redirect(url_for('routes.index'))
+    else:
+        flash('❌ Invalid access code. Please try again.', 'error')
+        return redirect(url_for('routes.security_gate'))
+
+@bp.route("/admin/backdoor")
+@require_admin_auth
+def admin_backdoor():
+    """Admin backdoor - access any user without PIN"""
+    user_id = request.args.get('user_id', type=int)
+    
+    if not user_id:
+        # Show list of all users for backdoor access
+        all_users = users.query.join(roles, users.role_id == roles.id).all()
+        return render_template("admin_backdoor.html", users=all_users)
+    
+    # Direct access to user without PIN
+    user = users.query.join(roles, users.role_id == roles.id).filter(users.id == user_id).first()
+    
+    if not user:
+        flash('❌ User not found.', 'error')
+        return redirect(url_for('routes.admin_backdoor'))
+    
+    # Set admin bypass flag
+    session['admin_bypass'] = True
+    session['bypass_user_id'] = user_id
+    
+    flash(f'🔓 Admin backdoor: Accessing {user.first_name} {user.last_name} without PIN', 'info')
+    return redirect(url_for('routes.entries', user_id=user_id))
+
+@bp.route("/price-list")
+def price_list():
+    """Price list page showing display items (like cakes) for customers"""
+    # Get all active display items (like cakes, snacks, etc.)
+    display_items_list = display_items.query.filter_by(is_active=True).order_by(display_items.display_order, display_items.name).all()
+    
+    # Create price data for template
+    price_data = []
+    for item in display_items_list:
+        price_data.append({
+            'item': item,
+            'price_euros': item.price_cents / 100,
+            'category': item.category
+        })
+    
+    return render_template("price_list.html", 
+                         price_data=price_data)
+
+@bp.route("/admin/daily-prices")
+@require_admin_auth
+def admin_daily_prices():
+    """Admin interface for managing daily prices"""
+    from datetime import date, timedelta
+    
+    # Get all active beverages
+    all_beverages = beverages.query.filter_by(status=True).all()
+    
+    # Get today's date
+    today = date.today()
+    
+    # Get daily prices for today
+    today_prices = daily_prices.query.filter_by(date=today, is_active=True).all()
+    
+    # Create a dict for easy lookup
+    price_dict = {price.beverage_id: price for price in today_prices}
+    
+    return render_template("admin_daily_prices.html", 
+                         beverages=all_beverages,
+                         today_prices=price_dict,
+                         today=today)
+
+@bp.route("/admin/daily-prices/set", methods=["POST"])
+@require_admin_auth
+def set_daily_price():
+    """Set daily price for a beverage"""
+    from datetime import date
+    
+    beverage_id = request.form.get('beverage_id', type=int)
+    price_euros = request.form.get('price_euros', type=float)
+    price_date = request.form.get('price_date', type=str)
+    
+    if not beverage_id or not price_euros:
+        flash('❌ Missing required fields.', 'error')
+        return redirect(url_for('routes.admin_daily_prices'))
+    
+    # Convert euros to cents
+    price_cents = int(price_euros * 100)
+    
+    # Parse date
+    if price_date:
+        target_date = datetime.strptime(price_date, '%Y-%m-%d').date()
+    else:
+        target_date = date.today()
+    
+    # Check if price already exists for this date
+    existing_price = daily_prices.query.filter_by(
+        beverage_id=beverage_id, 
+        date=target_date
+    ).first()
+    
+    if existing_price:
+        # Update existing price
+        existing_price.price_cents = price_cents
+        existing_price.is_active = True
+        existing_price.updated_at = datetime.utcnow()
+    else:
+        # Create new price
+        new_price = daily_prices(
+            beverage_id=beverage_id,
+            price_cents=price_cents,
+            date=target_date,
+            is_active=True
+        )
+        db.session.add(new_price)
+    
+    try:
+        db.session.commit()
+        flash(f'✅ Daily price updated successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'❌ Error updating price: {str(e)}', 'error')
+    
+    return redirect(url_for('routes.admin_daily_prices'))
+
+@bp.route("/admin/display-items")
+@require_admin_auth
+def admin_display_items():
+    """Admin interface for managing display items (like cakes)"""
+    # Get all display items
+    all_items = display_items.query.order_by(display_items.display_order, display_items.name).all()
+    
+    return render_template("admin_display_items.html", 
+                         items=all_items)
+
+@bp.route("/admin/display-items/add", methods=["POST"])
+@require_admin_auth
+def add_display_item():
+    """Add a new display item"""
+    name = request.form.get('name', '').strip()
+    description = request.form.get('description', '').strip()
+    price_euros = request.form.get('price_euros', type=float)
+    category = request.form.get('category', 'food')
+    display_order = request.form.get('display_order', type=int) or 0
+    
+    if not name or not price_euros:
+        flash('❌ Name and price are required.', 'error')
+        return redirect(url_for('routes.admin_display_items'))
+    
+    # Convert euros to cents
+    price_cents = int(price_euros * 100)
+    
+    # Create new display item
+    new_item = display_items(
+        name=name,
+        description=description,
+        price_cents=price_cents,
+        category=category,
+        display_order=display_order,
+        is_active=True
+    )
+    
+    try:
+        db.session.add(new_item)
+        db.session.commit()
+        flash(f'✅ Display item "{name}" added successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'❌ Error adding item: {str(e)}', 'error')
+    
+    return redirect(url_for('routes.admin_display_items'))
+
+@bp.route("/admin/display-items/update", methods=["POST"])
+@require_admin_auth
+def update_display_item():
+    """Update a display item"""
+    item_id = request.form.get('item_id', type=int)
+    name = request.form.get('name', '').strip()
+    description = request.form.get('description', '').strip()
+    price_euros = request.form.get('price_euros', type=float)
+    category = request.form.get('category', 'food')
+    display_order = request.form.get('display_order', type=int) or 0
+    is_active = request.form.get('is_active') == 'on'
+    
+    if not item_id or not name or not price_euros:
+        flash('❌ Missing required fields.', 'error')
+        return redirect(url_for('routes.admin_display_items'))
+    
+    # Get the item
+    item = display_items.query.get(item_id)
+    if not item:
+        flash('❌ Item not found.', 'error')
+        return redirect(url_for('routes.admin_display_items'))
+    
+    # Update the item
+    item.name = name
+    item.description = description
+    item.price_cents = int(price_euros * 100)
+    item.category = category
+    item.display_order = display_order
+    item.is_active = is_active
+    item.updated_at = datetime.utcnow()
+    
+    try:
+        db.session.commit()
+        flash(f'✅ Display item "{name}" updated successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'❌ Error updating item: {str(e)}', 'error')
+    
+    return redirect(url_for('routes.admin_display_items'))
+
+@bp.route("/admin/display-items/delete/<int:item_id>")
+@require_admin_auth
+def delete_display_item(item_id):
+    """Delete a display item"""
+    item = display_items.query.get(item_id)
+    if not item:
+        flash('❌ Item not found.', 'error')
+        return redirect(url_for('routes.admin_display_items'))
+    
+    try:
+        db.session.delete(item)
+        db.session.commit()
+        flash(f'✅ Display item "{item.name}" deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'❌ Error deleting item: {str(e)}', 'error')
+    
+    return redirect(url_for('routes.admin_display_items'))
+
+@bp.route("/api/set-theme", methods=["POST"])
+def set_theme():
+    """API endpoint to set the current theme globally"""
+    try:
+        data = request.get_json()
+        theme = data.get('theme', 'coffee')
+        
+        # Store theme in session for server-side tracking
+        session['current_theme'] = theme
+        
+        return jsonify({
+            'success': True,
+            'theme': theme,
+            'message': f'Theme set to {theme}'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
+
+@bp.route("/api/get-theme")
+def get_theme():
+    """API endpoint to get the current theme"""
+    theme = session.get('current_theme', 'coffee')
+    return jsonify({
+        'success': True,
+        'theme': theme
+    })
+
+@bp.route("/admin/security-status")
+@require_admin_auth
+def admin_security_status():
+    """Show current security status"""
+    security_info = get_security_info()
+    return jsonify(security_info)

@@ -415,8 +415,26 @@ class PinManagement {
 }
 
 // Initialize beverage consumption when DOM is loaded
+// Theme Switcher Class for Entries
+class ThemeSwitcher {
+    constructor() {
+        this.currentTheme = localStorage.getItem('selectedTheme') || 'coffee';
+        this.init();
+    }
+
+    init() {
+        // Set initial theme
+        this.applyTheme(this.currentTheme);
+    }
+
+    applyTheme(theme) {
+        document.body.setAttribute('data-theme', theme);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     new BeverageConsumption();
     new PinManagement();
+    new ThemeSwitcher();
     console.log('Beverage consumption system initialized!');
 });

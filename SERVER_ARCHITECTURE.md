@@ -4,24 +4,24 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    YOUR SERVER (100.115.249.53)            │
+│                    YOUR SERVER (100.115.249.53)             │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  ┌─────────────────────┐    ┌─────────────────────────────┐  │
-│  │   EXISTING SYSTEM  │    │      LAURIN BUILD          │  │
-│  │                    │    │                             │  │
-│  │  Port: 5000        │    │  Port: 5001 (Admin)        │  │
-│  │  Port: 5002 (User) │    │  Port: 5002 (User)         │  │
-│  │                     │    │                             │  │
-│  │  Containers:        │    │  Containers:               │  │
-│  │  • schuelerfirma_*  │    │  • laurin_build_*           │  │
-│  │                     │    │                             │  │
-│  │  Database:          │    │  Database:                  │  │
-│  │  • Existing DB      │    │  • New PostgreSQL          │  │
-│  │                     │    │                             │  │
-│  │  Status:            │    │  Status:                    │  │
-│  │  ✅ UNTOUCHED       │    │  ✅ COMPLETELY SEPARATE     │  │
-│  └─────────────────────┘    └─────────────────────────────┘  │
+│  ┌─────────────────────┐    ┌─────────────────────────────┐ │
+│  │   EXISTING SYSTEM   │    │      LAURIN BUILD           │ │
+│  │                     │    │                             │ │
+│  │  Port: 5000         │    │  Port: 5001 (Admin)         │ │
+│  │  Port: 5002 (User ) │    │  Port: 5002 (User)          │ │
+│  │                     │    │                             │ │
+│  │  Containers:        │    │  Containers:                │ │
+│  │  • schuelerfirma_*  │    │  • laurin_build_*           │ │
+│  │                     │    │                             │ │
+│  │  Database:          │    │  Database:                  │ │
+│  │  • Existing DB      │    │  • New PostgreSQL           │ │
+│  │                     │    │                             │ │
+│  │  Status:            │    │  Status:                    │ │
+│  │  ✅ UNTOUCHED       │    │  ✅ COMPLETELY SEPARATE      │ │
+│  └─────────────────────┘    └─────────────────────────────┘ │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```

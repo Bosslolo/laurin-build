@@ -170,7 +170,7 @@ class PinAuth {
         this.pinUserInfo.textContent = `Please enter PIN for ${userName}`;
         this.pinInput.value = '';
         this.pinError.style.display = 'none';
-        this.pinOverlay.style.display = 'flex';
+        this.pinOverlay.style.display = 'flex'; // Show the PIN overlay
         this.pinInput.focus();
         document.body.style.overflow = 'hidden';
     }
@@ -225,7 +225,7 @@ class PinAuth {
     }
     
     hideOverlay() {
-        this.pinOverlay.style.display = 'none';
+        this.pinOverlay.style.display = 'none'; // Hide the PIN overlay
         document.body.style.overflow = '';
         this.currentUser = null;
     }
@@ -1197,6 +1197,13 @@ class GuestsButton {
 
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // CRITICAL: Ensure PIN overlay is hidden on page load
+    const pinOverlay = document.getElementById('pinOverlay');
+    if (pinOverlay) {
+        pinOverlay.style.display = 'none';
+        console.log('✅ PIN overlay explicitly hidden on page load');
+    }
+    
     new UserSearch();
     new UserClickHandler();
     new GuestsButton();
@@ -1213,4 +1220,149 @@ document.addEventListener('DOMContentLoaded', function() {
     window.devUserManagementModal = new DevUserManagementModal();
     window.devItemModal = new DevItemModal();
     window.devPriceModal = new DevPriceModal();
+    new ThemeSwitcher();
 });
+
+// Theme Switcher Class
+class ThemeSwitcher {
+    constructor() {
+        this.currentTheme = localStorage.getItem('selectedTheme') || 'coffee';
+        this.init();
+    }
+
+    init() {
+        // Set initial theme - ALWAYS apply theme regardless of mode
+        this.applyTheme(this.currentTheme);
+        
+        // Add event listeners (only if elements exist)
+        const themeBtn = document.getElementById('themeSwitcherBtn');
+        if (themeBtn) {
+            themeBtn.addEventListener('click', () => {
+                this.showThemeModal();
+            });
+        }
+
+        // Add click listeners to theme options (only if they exist)
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const theme = e.currentTarget.dataset.theme;
+                this.selectTheme(theme);
+            });
+        });
+        
+        // Listen for theme changes from other tabs/windows
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'selectedTheme' && e.newValue) {
+                this.currentTheme = e.newValue;
+                this.applyTheme(e.newValue);
+            }
+        });
+        
+        // Also check for theme changes on focus (when user switches back to tab)
+        window.addEventListener('focus', () => {
+            const storedTheme = localStorage.getItem('selectedTheme') || 'coffee';
+            if (storedTheme !== this.currentTheme) {
+                this.currentTheme = storedTheme;
+                this.applyTheme(storedTheme);
+            }
+        });
+    }
+
+    showThemeModal() {
+        const modal = new bootstrap.Modal(document.getElementById('themeSwitcherModal'));
+        modal.show();
+    }
+
+    selectTheme(theme) {
+        this.currentTheme = theme;
+        this.applyTheme(theme);
+        
+        // Force localStorage update
+        localStorage.setItem('selectedTheme', theme);
+        
+        // AGGRESSIVE APPROACH: Send theme change to server
+        fetch('/api/set-theme', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ theme: theme })
+        }).catch(err => console.log('Server theme update failed:', err));
+        
+        // Wait a moment then force all tabs to update with MULTIPLE methods
+        setTimeout(() => {
+            // Method 1: Storage Event
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'selectedTheme',
+                newValue: theme,
+                oldValue: this.currentTheme,
+                url: window.location.href,
+                storageArea: localStorage
+            }));
+            
+            // Method 2: Custom Event
+            window.dispatchEvent(new CustomEvent('themeChanged', {
+                detail: { theme: theme }
+            }));
+            
+            // Method 3: PostMessage to all windows
+            if (window.opener) {
+                window.opener.postMessage({ type: 'themeChange', theme: theme }, '*');
+            }
+            
+            // Method 4: Broadcast to all windows
+            window.postMessage({ type: 'themeChange', theme: theme }, '*');
+            
+            // Method 5: Force update all iframes
+            document.querySelectorAll('iframe').forEach(iframe => {
+                try {
+                    iframe.contentWindow.postMessage({ type: 'themeChange', theme: theme }, '*');
+                } catch (e) {}
+            });
+            
+            console.log(`🎨 Theme changed to: ${theme} - forcing ALL tabs to update with 5 methods`);
+        }, 100);
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('themeSwitcherModal'));
+        if (modal) {
+            modal.hide();
+        }
+    }
+
+    applyTheme(theme) {
+        // Force theme application with multiple methods
+        document.body.setAttribute('data-theme', theme);
+        
+        // Also set it as a class for additional CSS targeting
+        document.body.className = document.body.className.replace(/theme-\w+/g, '');
+        document.body.classList.add(`theme-${theme}`);
+        
+        // Force a style recalculation
+        document.body.style.display = 'none';
+        document.body.offsetHeight; // Trigger reflow
+        document.body.style.display = '';
+        
+        // Update theme button text
+        const themeBtn = document.getElementById('themeSwitcherBtn');
+        if (themeBtn) {
+            const themeNames = {
+                'coffee': '☕ Coffee',
+                'spring': '🌸 Spring', 
+                'summer': '☀️ Summer',
+                'autumn': '🍂 Autumn',
+                'winter': '❄️ Winter'
+            };
+            themeBtn.innerHTML = `<i class="fas fa-palette"></i> ${themeNames[theme]}`;
+        }
+        
+        // Debug log
+        console.log(`Theme applied: ${theme}`);
+        
+        // Force refresh of all elements
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(el => {
+            el.style.display = 'none';
+            el.offsetHeight;
+            el.style.display = '';
+        });
+    }
+}

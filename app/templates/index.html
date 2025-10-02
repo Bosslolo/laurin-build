@@ -55,41 +55,45 @@
                     <a href="{{ url_for('routes.monthly_report') }}" class="btn btn-outline-info">
                         <i class="fas fa-chart-bar"></i> Monthly Report
                     </a>
+                    <a href="{{ url_for('routes.admin_backdoor') }}" class="btn btn-outline-danger">
+                        <i class="fas fa-door-open"></i> Admin Backdoor
+                    </a>
                 </div>
+                        <div class="btn-group mt-2" role="group">
+                            <button class="btn btn-outline-warning" id="themeSwitcherBtn">
+                                <i class="fas fa-palette"></i> Change Theme
+                            </button>
+                            <a href="{{ url_for('routes.admin_daily_prices') }}" class="btn btn-outline-info">
+                                <i class="fas fa-calendar-day"></i> Daily Prices
+                            </a>
+                            <a href="{{ url_for('routes.admin_display_items') }}" class="btn btn-outline-success">
+                                <i class="fas fa-store"></i> Display Items
+                            </a>
+                        </div>
             </div>
             {% endif %}
             
-            <!-- Top Supporter Display -->
-            {% if top_spender %}
-            <div class="row mb-3">
-                <div class="col-12">
-                    <div class="top-supporter">
-                        <div class="top-supporter-title">
-                            <i class="fas fa-crown top-supporter-icon"></i>
-                            Nummer eins CSH supporter
-                            <i class="fas fa-crown top-supporter-icon"></i>
-                        </div>
-                        <div class="top-supporter-name">
-                            {{ top_spender.first_name }} {{ top_spender.last_name }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- Guests Button -->
+            <!-- Fun Title Row -->
             <div class="row mb-3">
                 <div class="col-12 text-center">
-                    <button class="btn btn-outline-primary btn-lg guests-btn" id="guestsBtn">
-                        <i class="fas fa-user-friends"></i>
-                        Guests
-                    </button>
+                    <h2 class="page-title">
+                        <i class="fas fa-mug-hot fun-icon pulsing-icon" style="color: #8B4513; font-size: 1.8rem; margin-right: 15px;"></i>
+                        Kaffeeliste
+                        <i class="fas fa-coffee fun-icon pulsing-icon" style="color: #D2691E; font-size: 1.8rem; margin-left: 15px;"></i>
+                    </h2>
                 </div>
             </div>
             
-            <!-- Fuzzy Search Bar -->
-            <div class="row mb-4">
-                <div class="col-12">
+            <!-- Logo, Search, and Guests Row -->
+            <div class="row mb-4 align-items-center">
+                <div class="col-md-2 col-12 text-center text-md-start">
+                    <a href="{{ url_for('routes.price_list') }}" class="logo-link" title="View Price List">
+                        <img src="{{ url_for('static', filename='images/CSH-Logo.png') }}" 
+                             alt="CSH School Logo" 
+                             class="school-logo-full">
+                    </a>
+                </div>
+                <div class="col-md-7 col-12">
                     <div class="search-container">
                         <div class="search-input-wrapper">
                             <i class="fas fa-search search-icon"></i>
@@ -98,10 +102,18 @@
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
+                        {% if is_dev %}
                         <div class="search-results-info">
                             <span id="searchResultsCount" class="search-results-text"></span>
                         </div>
+                        {% endif %}
                     </div>
+                </div>
+                <div class="col-md-3 col-12 text-center text-md-end mt-3 mt-md-0">
+                    <button class="btn btn-coffee btn-lg guests-btn" id="guestsBtn">
+                        <i class="fas fa-mug-hot"></i>
+                        Guests
+                    </button>
                 </div>
             </div>
 
@@ -409,8 +421,192 @@
     </div>
     {% endif %}
     
+    <!-- Theme Switcher Modal -->
+    <div class="modal fade" id="themeSwitcherModal" tabindex="-1" aria-labelledby="themeSwitcherModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="themeSwitcherModalLabel">
+                        <i class="fas fa-palette"></i> Choose Theme
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="theme-option" data-theme="coffee">
+                                <div class="theme-preview coffee-preview">
+                                    <div class="theme-colors">
+                                        <div class="color-swatch" style="background: #8B4513;"></div>
+                                        <div class="color-swatch" style="background: #D2691E;"></div>
+                                        <div class="color-swatch" style="background: #CD853F;"></div>
+                                    </div>
+                                    <h6>☕ Coffee</h6>
+                                    <p>Warm and cozy coffee shop vibes</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="theme-option" data-theme="spring">
+                                <div class="theme-preview spring-preview">
+                                    <div class="theme-colors">
+                                        <div class="color-swatch" style="background: #4CAF50;"></div>
+                                        <div class="color-swatch" style="background: #8BC34A;"></div>
+                                        <div class="color-swatch" style="background: #C8E6C9;"></div>
+                                    </div>
+                                    <h6>🌸 Spring</h6>
+                                    <p>Fresh and blooming with new life</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="theme-option" data-theme="summer">
+                                <div class="theme-preview summer-preview">
+                                    <div class="theme-colors">
+                                        <div class="color-swatch" style="background: #FF9800;"></div>
+                                        <div class="color-swatch" style="background: #FFC107;"></div>
+                                        <div class="color-swatch" style="background: #FFF3E0;"></div>
+                                    </div>
+                                    <h6>☀️ Summer</h6>
+                                    <p>Bright and sunny with warm energy</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="theme-option" data-theme="autumn">
+                                <div class="theme-preview autumn-preview">
+                                    <div class="theme-colors">
+                                        <div class="color-swatch" style="background: #FF5722;"></div>
+                                        <div class="color-swatch" style="background: #FF9800;"></div>
+                                        <div class="color-swatch" style="background: #FFC107;"></div>
+                                    </div>
+                                    <h6>🍂 Autumn</h6>
+                                    <p>Rich and warm with golden tones</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="theme-option" data-theme="winter">
+                                <div class="theme-preview winter-preview">
+                                    <div class="theme-colors">
+                                        <div class="color-swatch" style="background: #2196F3;"></div>
+                                        <div class="color-swatch" style="background: #64B5F6;"></div>
+                                        <div class="color-swatch" style="background: #E3F2FD;"></div>
+                                    </div>
+                                    <h6>❄️ Winter</h6>
+                                    <p>Cool and crisp with icy elegance</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- External JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+    
+    <!-- Theme Switcher for User View -->
+    <script>
+        // Simple Theme Switcher for User View
+        class UserThemeSwitcher {
+            constructor() {
+                this.currentTheme = localStorage.getItem('selectedTheme') || 'coffee';
+                this.init();
+            }
+
+            init() {
+                // Set initial theme
+                this.applyTheme(this.currentTheme);
+                
+                // Listen for theme changes from other tabs/windows
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'selectedTheme' && e.newValue) {
+                        this.currentTheme = e.newValue;
+                        this.applyTheme(e.newValue);
+                        console.log(`User view: Theme changed via storage to ${e.newValue}`);
+                    }
+                });
+                
+                // Listen for custom theme change events
+                window.addEventListener('themeChanged', (e) => {
+                    this.currentTheme = e.detail.theme;
+                    this.applyTheme(e.detail.theme);
+                    console.log(`User view: Theme changed via custom event to ${e.detail.theme}`);
+                });
+                
+                // Listen for postMessage from other windows
+                window.addEventListener('message', (e) => {
+                    if (e.data && e.data.type === 'themeChange') {
+                        this.currentTheme = e.data.theme;
+                        this.applyTheme(e.data.theme);
+                        console.log(`User view: Theme changed via postMessage to ${e.data.theme}`);
+                    }
+                });
+                
+                // Also check for theme changes on focus (when user switches back to tab)
+                window.addEventListener('focus', () => {
+                    const storedTheme = localStorage.getItem('selectedTheme') || 'coffee';
+                    if (storedTheme !== this.currentTheme) {
+                        this.currentTheme = storedTheme;
+                        this.applyTheme(storedTheme);
+                        console.log(`User view: Theme changed via focus to ${storedTheme}`);
+                    }
+                });
+                
+                // Poll for theme changes every 500ms as a fallback
+                setInterval(() => {
+                    const storedTheme = localStorage.getItem('selectedTheme') || 'coffee';
+                    if (storedTheme !== this.currentTheme) {
+                        this.currentTheme = storedTheme;
+                        this.applyTheme(storedTheme);
+                        console.log(`🔄 User view: Theme changed via polling to ${storedTheme}`);
+                    }
+                }, 500);
+                
+                // AGGRESSIVE: Poll server for theme changes every 1 second
+                setInterval(() => {
+                    fetch('/api/get-theme')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.theme !== this.currentTheme) {
+                                this.currentTheme = data.theme;
+                                localStorage.setItem('selectedTheme', data.theme);
+                                this.applyTheme(data.theme);
+                                console.log(`🌐 User view: Theme changed via server polling to ${data.theme}`);
+                            }
+                        })
+                        .catch(err => console.log('Server theme polling failed:', err));
+                }, 1000);
+            }
+
+            applyTheme(theme) {
+                // Force theme application with multiple methods
+                document.body.setAttribute('data-theme', theme);
+                
+                // Also set it as a class for additional CSS targeting
+                document.body.className = document.body.className.replace(/theme-\w+/g, '');
+                document.body.classList.add(`theme-${theme}`);
+                
+                // Force a style recalculation
+                document.body.style.display = 'none';
+                document.body.offsetHeight; // Trigger reflow
+                document.body.style.display = '';
+                
+                // Debug log
+                console.log(`Theme applied to user view: ${theme}`);
+            }
+        }
+
+        // Initialize theme when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            new UserThemeSwitcher();
+        });
+    </script>
 </body>
 </html>

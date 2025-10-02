@@ -1,24 +1,84 @@
-/* Base styles for the Coffee List App */
+/* Base styles for the Coffee List App - Creative Coffee Theme */
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8B4513 0%, #A0522D 15%, #D2691E 30%, #CD853F 45%, #DEB887 60%, #F5DEB3 75%, #FFF8DC 90%, #FFFAF0 100%);
     min-height: 100vh;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 140, 0, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 69, 0, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 40% 40%, rgba(255, 165, 0, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 60% 60%, rgba(255, 99, 71, 0.08) 0%, transparent 35%),
+        radial-gradient(circle at 10% 20%, rgba(139, 69, 19, 0.1) 0%, transparent 30%),
+        radial-gradient(circle at 90% 80%, rgba(210, 105, 30, 0.08) 0%, transparent 25%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        linear-gradient(45deg, transparent 0%, rgba(255, 140, 0, 0.03) 25%, transparent 50%, rgba(255, 69, 0, 0.03) 75%, transparent 100%),
+        linear-gradient(-45deg, transparent 0%, rgba(255, 165, 0, 0.02) 25%, transparent 50%, rgba(255, 99, 71, 0.02) 75%, transparent 100%);
+    pointer-events: none;
+    z-index: -1;
 }
 
 .main-container {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, rgba(250, 248, 245, 0.95) 0%, rgba(245, 222, 179, 0.9) 30%, rgba(255, 248, 220, 0.95) 70%, rgba(250, 240, 230, 0.9) 100%);
+    border-radius: 35px;
+    box-shadow: 
+        0 40px 80px rgba(139, 69, 19, 0.2),
+        0 20px 40px rgba(255, 140, 0, 0.15),
+        0 8px 16px rgba(255, 69, 0, 0.1),
+        inset 0 3px 6px rgba(255, 255, 255, 0.7),
+        inset 0 -2px 4px rgba(139, 69, 19, 0.08);
+    backdrop-filter: blur(25px);
     margin: 2rem auto;
-    padding: 2rem;
+    padding: 4rem;
+    border: 3px solid rgba(139, 69, 19, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.main-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 15% 25%, rgba(255, 140, 0, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 75%, rgba(255, 69, 0, 0.06) 0%, transparent 35%),
+        radial-gradient(circle at 50% 50%, rgba(255, 165, 0, 0.04) 0%, transparent 25%);
+    border-radius: 35px;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .page-title {
-    color: #333;
+    color: #8B4513;
     font-weight: 700;
     margin-bottom: 2rem;
     text-align: center;
+    text-shadow: 0 2px 4px rgba(139, 69, 19, 0.1);
+    position: relative;
+    z-index: 2;
 }
 
 .coffee-icon {
@@ -27,35 +87,63 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%);
     border: none;
-    border-radius: 10px;
+    border-radius: 20px;
     padding: 12px 30px;
     font-weight: 600;
     transition: all 0.3s ease;
+    box-shadow: 
+        0 6px 20px rgba(139, 69, 19, 0.3),
+        0 2px 8px rgba(210, 105, 30, 0.2);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 
+        0 8px 25px rgba(139, 69, 19, 0.4),
+        0 4px 12px rgba(210, 105, 30, 0.3);
+    background: linear-gradient(135deg, #D2691E 0%, #8B4513 50%, #A0522D 100%);
 }
 
 .btn-primary:focus {
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
 }
 
-/* Reload Button */
+/* Specific done button styling */
+.done-btn {
+    background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%) !important;
+    border: none !important;
+    border-radius: 20px !important;
+    padding: 12px 30px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 
+        0 6px 20px rgba(139, 69, 19, 0.3),
+        0 2px 8px rgba(210, 105, 30, 0.2) !important;
+}
+
+.done-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 
+        0 8px 25px rgba(139, 69, 19, 0.4),
+        0 4px 12px rgba(210, 105, 30, 0.3) !important;
+    background: linear-gradient(135deg, #D2691E 0%, #8B4513 50%, #A0522D 100%) !important;
+}
+
+/* Coffee-Themed Reload Button */
 .reload-btn {
     position: fixed;
     top: 20px;
     left: 20px;
     width: 50px;
     height: 50px;
-    background: rgba(255, 255, 255, 0.9);
+    background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%);
     border: none;
     border-radius: 50%;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 
+        0 6px 20px rgba(139, 69, 19, 0.3),
+        0 2px 8px rgba(210, 105, 30, 0.2);
     cursor: pointer;
     z-index: 1000;
     transition: all 0.3s ease;
@@ -63,13 +151,15 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
-    color: #333;
+    color: white;
 }
 
 .reload-btn:hover {
-    background: rgba(255, 255, 255, 1);
+    background: linear-gradient(135deg, #D2691E 0%, #8B4513 50%, #A0522D 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 
+        0 8px 25px rgba(139, 69, 19, 0.4),
+        0 4px 12px rgba(210, 105, 30, 0.3);
 }
 
 .reload-btn:active {
@@ -84,9 +174,9 @@ body {
     transform: rotate(180deg);
 }
 
-/* Entries specific styles */
+/* Entries specific styles - Coffee Theme */
 .user-info-card {
-    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    background: linear-gradient(135deg, #DEB887 0%, #F5DEB3 50%, #FFF8DC 100%);
     border-radius: 15px;
     padding: 1.5rem;
     margin-bottom: 2rem;
@@ -200,12 +290,12 @@ body {
 }
 
 .section-title i {
-    color: #667eea;
+    color: #8B4513;
 }
 
-/* Section title styling */
+/* Section title styling - Coffee Theme */
 .beverage-section .section-title i {
-    color: #667eea; /* Blue for beverages */
+    color: #8B4513; /* Coffee brown for beverages */
 }
 
 /* PIN Management Layout */
@@ -249,19 +339,27 @@ body {
 }
 
 .beverage-item {
-    background: white;
-    border-radius: 12px;
+    background: linear-gradient(135deg, #DEB887 0%, #F5DEB3 50%, #FFF8DC 100%);
+    border-radius: 20px;
     padding: 1.5rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 
+        0 6px 20px rgba(139, 69, 19, 0.15),
+        0 2px 8px rgba(210, 105, 30, 0.1);
     display: flex;
     align-items: center;
     gap: 1.5rem;
     transition: all 0.3s ease;
+    border: 1px solid rgba(139, 69, 19, 0.1);
+    overflow: hidden;
+    position: relative;
 }
 
 .beverage-item:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 
+        0 10px 30px rgba(139, 69, 19, 0.25),
+        0 4px 12px rgba(210, 105, 30, 0.2);
     transform: translateY(-2px);
+    background: linear-gradient(135deg, #D2691E 0%, #DEB887 50%, #F5DEB3 100%);
 }
 
 /* Consumed Count Section */
@@ -271,24 +369,29 @@ body {
     align-items: center;
     min-width: 80px;
     padding: 0.5rem;
-    background: rgba(40, 167, 69, 0.1);
-    border-radius: 8px;
-    border: 2px solid rgba(40, 167, 69, 0.2);
+    background: linear-gradient(135deg, rgba(139, 69, 19, 0.15) 0%, rgba(210, 105, 30, 0.1) 100%);
+    border-radius: 12px;
+    border: 2px solid rgba(139, 69, 19, 0.3);
+    box-shadow: 
+        0 4px 8px rgba(139, 69, 19, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .consumed-count {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #28a745;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #8B4513 !important;
     line-height: 1;
+    text-shadow: 0 2px 4px rgba(139, 69, 19, 0.3);
 }
 
 .consumed-label {
-    color: #28a745;
-    font-size: 0.75rem;
-    font-weight: 600;
+    color: #D2691E;
+    font-size: 0.8rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
+    text-shadow: 0 1px 2px rgba(210, 105, 30, 0.3);
 }
 
 .beverage-info {
@@ -296,13 +399,13 @@ body {
 }
 
 .beverage-name {
-    color: #333;
+    color: #8B4513;
     font-weight: 600;
     margin-bottom: 0.25rem;
 }
 
 .beverage-price {
-    color: #667eea;
+    color: #D2691E;
     font-weight: 600;
     font-size: 1.1rem;
 }
@@ -311,6 +414,178 @@ body {
     display: flex;
     align-items: center;
 }
+
+/* Coffee-themed quantity buttons */
+.btn-outline-secondary {
+    border-color: #8B4513 !important;
+    color: #8B4513 !important;
+    background: transparent !important;
+}
+
+.btn-outline-secondary:hover {
+    background: #8B4513 !important;
+    border-color: #8B4513 !important;
+    color: white !important;
+}
+
+.btn-outline-secondary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25) !important;
+}
+
+/* Coffee-themed create PIN button */
+.btn-success {
+    background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%) !important;
+    border: none !important;
+    border-radius: 15px !important;
+    color: white !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 
+        0 4px 12px rgba(139, 69, 19, 0.3),
+        0 2px 6px rgba(210, 105, 30, 0.2) !important;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #D2691E 0%, #8B4513 50%, #A0522D 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 
+        0 6px 16px rgba(139, 69, 19, 0.4),
+        0 3px 8px rgba(210, 105, 30, 0.3) !important;
+}
+
+.btn-success:focus {
+    box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25) !important;
+}
+
+/* Override any remaining Bootstrap colors with coffee theme */
+.text-success, .text-warning, .text-danger, .text-primary, .text-secondary, .text-info {
+    color: #8B4513 !important;
+}
+
+.bg-success, .bg-warning, .bg-danger, .bg-primary, .bg-secondary, .bg-info {
+    background-color: #8B4513 !important;
+    color: white !important;
+}
+
+/* Override ALL Bootstrap button colors with coffee theme */
+.btn-primary {
+    background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%) !important;
+    border: 2px solid #8B4513 !important;
+    color: white !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3) !important;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #D2691E 0%, #8B4513 50%, #A0522D 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(139, 69, 19, 0.4) !important;
+    color: white !important;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #A0522D 0%, #8B4513 50%, #654321 100%) !important;
+    border: 2px solid #8B4513 !important;
+    color: white !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(160, 82, 45, 0.3) !important;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #654321 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(160, 82, 45, 0.4) !important;
+    color: white !important;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #CD853F 0%, #DEB887 50%, #F5DEB3 100%) !important;
+    border: 2px solid #8B4513 !important;
+    color: #8B4513 !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(205, 133, 63, 0.3) !important;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #DEB887 0%, #CD853F 50%, #8B4513 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(205, 133, 63, 0.4) !important;
+    color: white !important;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #FF8C00 0%, #FFA500 50%, #FFD700 100%) !important;
+    border: 2px solid #8B4513 !important;
+    color: #8B4513 !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3) !important;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #FFA500 0%, #FF8C00 50%, #D2691E 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(255, 140, 0, 0.4) !important;
+    color: white !important;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #B7410E 0%, #8B4513 50%, #654321 100%) !important;
+    border: 2px solid #8B4513 !important;
+    color: white !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(183, 65, 14, 0.3) !important;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #8B4513 0%, #B7410E 50%, #654321 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(183, 65, 14, 0.4) !important;
+    color: white !important;
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #D2691E 0%, #CD853F 50%, #DEB887 100%) !important;
+    border: 2px solid #8B4513 !important;
+    color: white !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(210, 105, 30, 0.3) !important;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #CD853F 0%, #D2691E 50%, #8B4513 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(210, 105, 30, 0.4) !important;
+    color: white !important;
+}
+
+/* Force all numbers to use coffee colors */
+span, div, p, h1, h2, h3, h4, h5, h6 {
+    color: inherit;
+}
+
+/* Specific override for any green numbers */
+* {
+    color: inherit;
+}
+
+/* Seasonal Theme CSS Variables */
+:root {
+    --current-theme: 'coffee';
+}
+
+/* OLD CONFLICTING THEME RULES REMOVED - Using comprehensive theme support at end of file */
 
 .quantity-controls {
     display: flex;
@@ -325,15 +600,15 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid #667eea;
-    color: #667eea;
+    border: 2px solid #8B4513;
+    color: #8B4513;
     background: white;
     transition: all 0.3s ease;
     font-size: 1.2rem;
 }
 
 .quantity-btn:hover {
-    background: #667eea;
+    background: #8B4513;
     color: white;
     transform: scale(1.1);
 }
@@ -343,11 +618,14 @@ body {
     font-size: 1.5rem;
     min-width: 40px;
     text-align: center;
-    color: #333;
-    background: rgba(102, 126, 234, 0.1);
+    color: #8B4513;
+    background: linear-gradient(135deg, rgba(139, 69, 19, 0.15) 0%, rgba(210, 105, 30, 0.1) 100%);
     padding: 0.5rem;
     border-radius: 8px;
-    border: 2px solid rgba(102, 126, 234, 0.2);
+    border: 2px solid rgba(139, 69, 19, 0.3);
+    box-shadow: 
+        0 2px 4px rgba(139, 69, 19, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .consumption-info {
@@ -385,18 +663,22 @@ body {
     color: white;
 }
 
-/* Modal Styles */
+/* Modal Styles - Coffee Theme */
 .modal-content {
-    border-radius: 15px;
+    border-radius: 20px;
     border: none;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 
+        0 20px 40px rgba(139, 69, 19, 0.3),
+        0 10px 20px rgba(210, 105, 30, 0.2);
+    background: linear-gradient(135deg, rgba(250, 248, 245, 0.95) 0%, rgba(245, 222, 179, 0.9) 100%);
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%);
     color: white;
-    border-radius: 15px 15px 0 0;
+    border-radius: 20px 20px 0 0;
     border-bottom: none;
+    box-shadow: 0 4px 8px rgba(139, 69, 19, 0.2);
 }
 
 .modal-title {
@@ -412,7 +694,7 @@ body {
 }
 
 .order-summary-modal h6 {
-    color: #333;
+    color: #8B4513;
     font-weight: 600;
     margin-bottom: 1rem;
 }
@@ -422,7 +704,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem 0;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid rgba(139, 69, 19, 0.2);
 }
 
 .modal-order-item:last-child {
@@ -431,19 +713,20 @@ body {
 
 .modal-order-item-name {
     font-weight: 500;
-    color: #333;
+    color: #8B4513;
 }
 
 .modal-order-item-quantity {
-    color: #667eea;
+    color: #D2691E;
     font-weight: 600;
     font-size: 1.1rem;
 }
 
 .modal-total {
     font-size: 1.1rem;
-    color: #333;
+    color: #8B4513;
     text-align: right;
+    font-weight: 600;
 }
 
 .back-button-section {
@@ -533,16 +816,19 @@ body {
 }
 
 .pin-modal {
-    background: white;
+    background: linear-gradient(135deg, rgba(250, 248, 245, 0.95) 0%, rgba(245, 222, 179, 0.9) 100%);
     border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 
+        0 20px 40px rgba(139, 69, 19, 0.3),
+        0 10px 20px rgba(210, 105, 30, 0.2);
     max-width: 400px;
     width: 90%;
     animation: slideIn 0.3s ease;
+    border: 2px solid rgba(139, 69, 19, 0.1);
 }
 
 .pin-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%);
     color: white;
     padding: 2rem;
     border-radius: 20px 20px 0 0;
@@ -587,12 +873,12 @@ body {
 }
 
 .pin-input:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #8B4513;
+    box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
 }
 
 .pin-submit-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%);
     border: none;
     border-radius: 12px;
     color: white;
@@ -725,4 +1011,188 @@ body {
     .search-container {
         display: none !important;
     }
+}
+
+/* =========================== */
+/* COMPREHENSIVE THEME SUPPORT */
+/* =========================== */
+
+/* Coffee Theme (Default) - All coffee-themed elements */
+body[data-theme="coffee"] .page-title,
+body.theme-coffee .page-title {
+    color: #8B4513 !important;
+}
+
+body[data-theme="coffee"] .coffee-icon,
+body.theme-coffee .coffee-icon {
+    color: #8B4513 !important;
+}
+
+body[data-theme="coffee"] .main-container,
+body.theme-coffee .main-container {
+    background: linear-gradient(135deg, rgba(250, 248, 245, 0.95) 0%, rgba(245, 222, 179, 0.9) 30%, rgba(255, 248, 220, 0.95) 70%, rgba(250, 240, 230, 0.9) 100%) !important;
+}
+
+body[data-theme="coffee"] .beverage-item,
+body.theme-coffee .beverage-item {
+    background: linear-gradient(135deg, #DEB887 0%, #F5DEB3 50%, #FFF8DC 100%) !important;
+}
+
+body[data-theme="coffee"] .consumed-count,
+body.theme-coffee .consumed-count {
+    color: #8B4513 !important;
+}
+
+body[data-theme="coffee"] .beverage-name,
+body.theme-coffee .beverage-name {
+    color: #8B4513 !important;
+}
+
+body[data-theme="coffee"] .beverage-price,
+body.theme-coffee .beverage-price {
+    color: #D2691E !important;
+}
+
+/* Spring Theme - All coffee elements to spring colors */
+body[data-theme="spring"] .page-title,
+body.theme-spring .page-title {
+    color: #ff4081 !important;
+}
+
+body[data-theme="spring"] .coffee-icon,
+body.theme-spring .coffee-icon {
+    color: #ff4081 !important;
+}
+
+body[data-theme="spring"] .main-container,
+body.theme-spring .main-container {
+    background: linear-gradient(135deg, rgba(252, 228, 236, 0.95) 0%, rgba(248, 187, 208, 0.9) 30%, rgba(255, 182, 193, 0.95) 70%, rgba(255, 192, 203, 0.9) 100%) !important;
+}
+
+body[data-theme="spring"] .beverage-item,
+body.theme-spring .beverage-item {
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #f8bbd9 100%) !important;
+}
+
+body[data-theme="spring"] .consumed-count,
+body.theme-spring .consumed-count {
+    color: #ff4081 !important;
+}
+
+body[data-theme="spring"] .beverage-name,
+body.theme-spring .beverage-name {
+    color: #ff4081 !important;
+}
+
+body[data-theme="spring"] .beverage-price,
+body.theme-spring .beverage-price {
+    color: #e91e63 !important;
+}
+
+/* Summer Theme - All coffee elements to summer colors */
+body[data-theme="summer"] .page-title,
+body.theme-summer .page-title {
+    color: #ffa726 !important;
+}
+
+body[data-theme="summer"] .coffee-icon,
+body.theme-summer .coffee-icon {
+    color: #ffa726 !important;
+}
+
+body[data-theme="summer"] .main-container,
+body.theme-summer .main-container {
+    background: linear-gradient(135deg, rgba(255, 249, 196, 0.95) 0%, rgba(255, 245, 157, 0.9) 30%, rgba(255, 243, 224, 0.95) 70%, rgba(255, 248, 225, 0.9) 100%) !important;
+}
+
+body[data-theme="summer"] .beverage-item,
+body.theme-summer .beverage-item {
+    background: linear-gradient(135deg, #fff9c4 0%, #fff59d 50%, #fff176 100%) !important;
+}
+
+body[data-theme="summer"] .consumed-count,
+body.theme-summer .consumed-count {
+    color: #ffa726 !important;
+}
+
+body[data-theme="summer"] .beverage-name,
+body.theme-summer .beverage-name {
+    color: #ffa726 !important;
+}
+
+body[data-theme="summer"] .beverage-price,
+body.theme-summer .beverage-price {
+    color: #fb8c00 !important;
+}
+
+/* Autumn Theme - All coffee elements to autumn colors */
+body[data-theme="autumn"] .page-title,
+body.theme-autumn .page-title {
+    color: #ff6f00 !important;
+}
+
+body[data-theme="autumn"] .coffee-icon,
+body.theme-autumn .coffee-icon {
+    color: #ff6f00 !important;
+}
+
+body[data-theme="autumn"] .main-container,
+body.theme-autumn .main-container {
+    background: linear-gradient(135deg, rgba(255, 232, 214, 0.95) 0%, rgba(255, 215, 186, 0.9) 30%, rgba(255, 218, 185, 0.95) 70%, rgba(255, 228, 196, 0.9) 100%) !important;
+}
+
+body[data-theme="autumn"] .beverage-item,
+body.theme-autumn .beverage-item {
+    background: linear-gradient(135deg, #ffe8d6 0%, #ffd7ba 50%, #ffcc80 100%) !important;
+}
+
+body[data-theme="autumn"] .consumed-count,
+body.theme-autumn .consumed-count {
+    color: #ff6f00 !important;
+}
+
+body[data-theme="autumn"] .beverage-name,
+body.theme-autumn .beverage-name {
+    color: #ff6f00 !important;
+}
+
+body[data-theme="autumn"] .beverage-price,
+body.theme-autumn .beverage-price {
+    color: #e65100 !important;
+}
+
+/* Winter Theme - All coffee elements to winter colors */
+body[data-theme="winter"] .page-title,
+body.theme-winter .page-title {
+    color: #0288d1 !important;
+}
+
+body[data-theme="winter"] .coffee-icon,
+body.theme-winter .coffee-icon {
+    color: #0288d1 !important;
+}
+
+body[data-theme="winter"] .main-container,
+body.theme-winter .main-container {
+    background: linear-gradient(135deg, rgba(225, 245, 254, 0.95) 0%, rgba(179, 229, 252, 0.9) 30%, rgba(227, 242, 253, 0.95) 70%, rgba(240, 248, 255, 0.9) 100%) !important;
+}
+
+body[data-theme="winter"] .beverage-item,
+body.theme-winter .beverage-item {
+    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 50%, #81d4fa 100%) !important;
+}
+
+body[data-theme="winter"] .consumed-count,
+body.theme-winter .consumed-count {
+    color: #0288d1 !important;
+}
+
+body[data-theme="winter"] .beverage-name,
+body.theme-winter .beverage-name {
+    color: #0288d1 !important;
+}
+
+body[data-theme="winter"] .beverage-price,
+body.theme-winter .beverage-price {
+    color: #01579b !important;
 }

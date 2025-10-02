@@ -42,6 +42,31 @@ class users(db.Model):
     # Relationships
     role = db.relationship('roles', backref='users')
 
+class display_items(db.Model):
+    __tablename__ = "display_items"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    price_cents = db.Column(db.Integer, nullable=False)
+    category = db.Column(db.String(50), nullable=False, default='food')  # 'food', 'drink', 'snack'
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    display_order = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+class daily_prices(db.Model):
+    __tablename__ = "daily_prices"
+    id = db.Column(db.Integer, primary_key=True)
+    beverage_id = db.Column(db.Integer, db.ForeignKey("beverages.id"), nullable=False)
+    price_cents = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    beverage = db.relationship('beverages', backref='daily_prices')
+
 class consumptions(db.Model):
     __tablename__ = "consumptions"
     id = db.Column(db.Integer, primary_key=True)

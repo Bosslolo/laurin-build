@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price List - Laurin Build</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 15%, #D2691E 30%, #CD853F 45%, #DEB887 60%, #F5DEB3 75%, #FFF8DC 90%, #FFFAF0 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Seasonal Theme Support */
+        body[data-theme="spring"] {
+            background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 15%, #8BC34A 30%, #AED581 45%, #C8E6C9 60%, #DCEDC8 75%, #F1F8E9 90%, #FFFFFF 100%);
+        }
+        
+        body[data-theme="summer"] {
+            background: linear-gradient(135deg, #FF9800 0%, #FFB74D 15%, #FFC107 30%, #FFD54F 45%, #FFECB3 60%, #FFF3E0 75%, #FFF8E1 90%, #FFFFFF 100%);
+        }
+        
+        body[data-theme="autumn"] {
+            background: linear-gradient(135deg, #FF5722 0%, #FF7043 15%, #FF9800 30%, #FFB74D 45%, #FFCC80 60%, #FFE0B2 75%, #FFF3E0 90%, #FFFFFF 100%);
+        }
+        
+        body[data-theme="winter"] {
+            background: linear-gradient(135deg, #2196F3 0%, #42A5F5 15%, #64B5F6 30%, #90CAF9 45%, #BBDEFB 60%, #E3F2FD 75%, #F3E5F5 90%, #FFFFFF 100%);
+        }
+        
+        .price-list-container {
+            background: linear-gradient(135deg, rgba(250, 248, 245, 0.95) 0%, rgba(245, 222, 179, 0.9) 30%, rgba(255, 248, 220, 0.95) 70%, rgba(250, 240, 230, 0.9) 100%);
+            border-radius: 25px;
+            box-shadow: 0 20px 40px rgba(139, 69, 19, 0.3), 0 8px 16px rgba(210, 105, 30, 0.2);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(139, 69, 19, 0.1);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+        }
+        
+        .price-list-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid #8B4513;
+        }
+        
+        .price-list-title {
+            color: #8B4513;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(139, 69, 19, 0.3);
+        }
+        
+        .price-list-subtitle {
+            color: #D2691E;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .price-table {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(139, 69, 19, 0.2);
+        }
+        
+        .price-table th {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            border: none;
+        }
+        
+        .price-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+            vertical-align: middle;
+        }
+        
+        .price-table tbody tr:hover {
+            background: rgba(139, 69, 19, 0.05);
+        }
+        
+        .beverage-name {
+            font-weight: 600;
+            color: #8B4513;
+        }
+        
+        .price-cell {
+            text-align: center;
+            font-weight: 600;
+            color: #D2691E;
+        }
+        
+        .back-button {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(139, 69, 19, 0.4);
+            color: white;
+        }
+        
+        /* Seasonal Theme - Price List Buttons */
+        body[data-theme="spring"] .back-button {
+            background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%) !important;
+        }
+        
+        body[data-theme="summer"] .back-button {
+            background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%) !important;
+        }
+        
+        body[data-theme="autumn"] .back-button {
+            background: linear-gradient(135deg, #FF5722 0%, #FF7043 100%) !important;
+        }
+        
+        body[data-theme="winter"] .back-button {
+            background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%) !important;
+        }
+        
+        /* =========================== */
+        /* COMPREHENSIVE THEME SUPPORT */
+        /* =========================== */
+        
+        /* Coffee Theme (Default) - All coffee-themed elements */
+        body[data-theme="coffee"] {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 15%, #D2691E 30%, #CD853F 45%, #DEB887 60%, #F5DEB3 75%, #FFF8DC 90%, #FFFAF0 100%) !important;
+        }
+        
+        body[data-theme="coffee"] .price-list-header {
+            border-bottom: 3px solid #8B4513 !important;
+        }
+        
+        body[data-theme="coffee"] .price-list-title {
+            color: #8B4513 !important;
+        }
+        
+        body[data-theme="coffee"] .price-list-subtitle {
+            color: #D2691E !important;
+        }
+        
+        body[data-theme="coffee"] .price-table th {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%) !important;
+        }
+        
+        body[data-theme="coffee"] .beverage-name {
+            color: #8B4513 !important;
+        }
+        
+        body[data-theme="coffee"] .price-cell {
+            color: #D2691E !important;
+        }
+        
+        /* Spring Theme - All coffee elements to spring colors */
+        body[data-theme="spring"] {
+            background: linear-gradient(135deg, #ff4081 0%, #e91e63 15%, #f06292 30%, #f48fb1 45%, #f8bbd9 60%, #fce4ec 75%, #fce4ec 90%, #fce4ec 100%) !important;
+        }
+        
+        body[data-theme="spring"] .price-list-header {
+            border-bottom: 3px solid #ff4081 !important;
+        }
+        
+        body[data-theme="spring"] .price-list-title {
+            color: #ff4081 !important;
+        }
+        
+        body[data-theme="spring"] .price-list-subtitle {
+            color: #e91e63 !important;
+        }
+        
+        body[data-theme="spring"] .price-table th {
+            background: linear-gradient(135deg, #ff4081 0%, #e91e63 100%) !important;
+        }
+        
+        body[data-theme="spring"] .beverage-name {
+            color: #ff4081 !important;
+        }
+        
+        body[data-theme="spring"] .price-cell {
+            color: #e91e63 !important;
+        }
+        
+        /* Summer Theme - All coffee elements to summer colors */
+        body[data-theme="summer"] {
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 15%, #ffb74d 30%, #ffcc02 45%, #fff59d 60%, #fff9c4 75%, #fffde7 90%, #fffde7 100%) !important;
+        }
+        
+        body[data-theme="summer"] .price-list-header {
+            border-bottom: 3px solid #ffa726 !important;
+        }
+        
+        body[data-theme="summer"] .price-list-title {
+            color: #ffa726 !important;
+        }
+        
+        body[data-theme="summer"] .price-list-subtitle {
+            color: #fb8c00 !important;
+        }
+        
+        body[data-theme="summer"] .price-table th {
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%) !important;
+        }
+        
+        body[data-theme="summer"] .beverage-name {
+            color: #ffa726 !important;
+        }
+        
+        body[data-theme="summer"] .price-cell {
+            color: #fb8c00 !important;
+        }
+        
+        /* Autumn Theme - All coffee elements to autumn colors */
+        body[data-theme="autumn"] {
+            background: linear-gradient(135deg, #ff6f00 0%, #e65100 15%, #ff8f00 30%, #ff9800 45%, #ffb74d 60%, #ffcc80 75%, #ffe0b2 90%, #fff3e0 100%) !important;
+        }
+        
+        body[data-theme="autumn"] .price-list-header {
+            border-bottom: 3px solid #ff6f00 !important;
+        }
+        
+        body[data-theme="autumn"] .price-list-title {
+            color: #ff6f00 !important;
+        }
+        
+        body[data-theme="autumn"] .price-list-subtitle {
+            color: #e65100 !important;
+        }
+        
+        body[data-theme="autumn"] .price-table th {
+            background: linear-gradient(135deg, #ff6f00 0%, #e65100 100%) !important;
+        }
+        
+        body[data-theme="autumn"] .beverage-name {
+            color: #ff6f00 !important;
+        }
+        
+        body[data-theme="autumn"] .price-cell {
+            color: #e65100 !important;
+        }
+        
+        /* Winter Theme - All coffee elements to winter colors */
+        body[data-theme="winter"] {
+            background: linear-gradient(135deg, #0288d1 0%, #01579b 15%, #0277bd 30%, #0288d1 45%, #29b6f6 60%, #81d4fa 75%, #b3e5fc 90%, #e1f5fe 100%) !important;
+        }
+        
+        body[data-theme="winter"] .price-list-header {
+            border-bottom: 3px solid #0288d1 !important;
+        }
+        
+        body[data-theme="winter"] .price-list-title {
+            color: #0288d1 !important;
+        }
+        
+        body[data-theme="winter"] .price-list-subtitle {
+            color: #01579b !important;
+        }
+        
+        body[data-theme="winter"] .price-table th {
+            background: linear-gradient(135deg, #0288d1 0%, #01579b 100%) !important;
+        }
+        
+        body[data-theme="winter"] .beverage-name {
+            color: #0288d1 !important;
+        }
+        
+        body[data-theme="winter"] .price-cell {
+            color: #01579b !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="price-list-container">
+            <div class="price-list-header">
+                <h1 class="price-list-title">
+                    <i class="fas fa-tags"></i> Price List
+                </h1>
+                <p class="price-list-subtitle">Current prices for all products</p>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table price-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th class="text-center">Price</th>
+                            <th class="text-center">Category</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in price_data %}
+                        <tr>
+                            <td class="beverage-name">
+                                <strong>{{ item.item.name }}</strong>
+                                {% if item.item.description %}
+                                    <br><small class="text-muted">{{ item.item.description }}</small>
+                                {% endif %}
+                            </td>
+                            <td class="price-cell">
+                                €{{ "%.2f"|format(item.price_euros) }}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-{{ 'cake' if item.category == 'food' else 'coffee' if item.category == 'drink' else 'cookie' }}"></i> 
+                                    {{ item.category.title() }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if not price_data %}
+            <div class="alert alert-warning mt-3">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>No items available:</strong> No display items have been added yet. 
+                Contact an administrator to add items to the price list.
+            </div>
+            {% endif %}
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('routes.index') }}" class="back-button">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Main System
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme Switcher for Price List
+        class ThemeSwitcher {
+            constructor() {
+                this.currentTheme = localStorage.getItem('selectedTheme') || 'coffee';
+                this.init();
+            }
+
+            init() {
+                // Set initial theme
+                this.applyTheme(this.currentTheme);
+            }
+
+            applyTheme(theme) {
+                document.body.setAttribute('data-theme', theme);
+            }
+        }
+
+        // Initialize theme when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            new ThemeSwitcher();
+        });
+    </script>
+</body>
+</html>

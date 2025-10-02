@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Items Management - Laurin Build</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 15%, #D2691E 30%, #CD853F 45%, #DEB887 60%, #F5DEB3 75%, #FFF8DC 90%, #FFFAF0 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Seasonal Theme Support */
+        body[data-theme="spring"] {
+            background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 15%, #8BC34A 30%, #AED581 45%, #C8E6C9 60%, #DCEDC8 75%, #F1F8E9 90%, #FFFFFF 100%);
+        }
+        
+        body[data-theme="summer"] {
+            background: linear-gradient(135deg, #FF9800 0%, #FFB74D 15%, #FFC107 30%, #FFD54F 45%, #FFECB3 60%, #FFF3E0 75%, #FFF8E1 90%, #FFFFFF 100%);
+        }
+        
+        body[data-theme="autumn"] {
+            background: linear-gradient(135deg, #FF5722 0%, #FF7043 15%, #FF9800 30%, #FFB74D 45%, #FFCC80 60%, #FFE0B2 75%, #FFF3E0 90%, #FFFFFF 100%);
+        }
+        
+        body[data-theme="winter"] {
+            background: linear-gradient(135deg, #2196F3 0%, #42A5F5 15%, #64B5F6 30%, #90CAF9 45%, #BBDEFB 60%, #E3F2FD 75%, #F3E5F5 90%, #FFFFFF 100%);
+        }
+        
+        .display-items-container {
+            background: linear-gradient(135deg, rgba(250, 248, 245, 0.95) 0%, rgba(245, 222, 179, 0.9) 30%, rgba(255, 248, 220, 0.95) 70%, rgba(250, 240, 230, 0.9) 100%);
+            border-radius: 25px;
+            box-shadow: 0 20px 40px rgba(139, 69, 19, 0.3), 0 8px 16px rgba(210, 105, 30, 0.2);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(139, 69, 19, 0.1);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+        }
+        
+        .display-items-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid #8B4513;
+        }
+        
+        .display-items-title {
+            color: #8B4513;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(139, 69, 19, 0.3);
+        }
+        
+        .display-items-subtitle {
+            color: #D2691E;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .item-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 20px rgba(139, 69, 19, 0.2);
+            border: 2px solid rgba(139, 69, 19, 0.1);
+        }
+        
+        .item-name {
+            font-weight: 600;
+            color: #8B4513;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .item-description {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+        
+        .item-price {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+            margin-right: 1rem;
+        }
+        
+        .item-category {
+            background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+            margin-right: 1rem;
+        }
+        
+        .item-status {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .item-status.inactive {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        }
+        
+        .add-item-form {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 20px rgba(139, 69, 19, 0.2);
+            border: 2px solid rgba(139, 69, 19, 0.1);
+        }
+        
+        .form-btn {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+        }
+        
+        .form-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(139, 69, 19, 0.4);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .back-button {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(139, 69, 19, 0.4);
+            color: white;
+        }
+        
+        /* Seasonal Theme - Buttons */
+        body[data-theme="spring"] .form-btn, body[data-theme="spring"] .back-button {
+            background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%) !important;
+        }
+        
+        body[data-theme="summer"] .form-btn, body[data-theme="summer"] .back-button {
+            background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%) !important;
+        }
+        
+        body[data-theme="autumn"] .form-btn, body[data-theme="autumn"] .back-button {
+            background: linear-gradient(135deg, #FF5722 0%, #FF7043 100%) !important;
+        }
+        
+        body[data-theme="winter"] .form-btn, body[data-theme="winter"] .back-button {
+            background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="display-items-container">
+            <div class="display-items-header">
+                <h1 class="display-items-title">
+                    <i class="fas fa-store"></i> Display Items Management
+                </h1>
+                <p class="display-items-subtitle">Manage items for the public price list (like cakes, snacks, etc.)</p>
+            </div>
+            
+            <!-- Add New Item Form -->
+            <div class="add-item-form">
+                <h3><i class="fas fa-plus-circle"></i> Add New Display Item</h3>
+                <form method="POST" action="{{ url_for('routes.add_display_item') }}">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="name" class="form-label">Item Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., Chocolate Cake">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="price_euros" class="form-label">Price (€)</label>
+                            <input type="number" class="form-control" id="price_euros" name="price_euros" step="0.01" min="0" required placeholder="2.50">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="food">Food</option>
+                                <option value="drink">Drink</option>
+                                <option value="snack">Snack</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-8">
+                            <label for="description" class="form-label">Description (Optional)</label>
+                            <input type="text" class="form-control" id="description" name="description" placeholder="e.g., Freshly baked chocolate cake">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="display_order" class="form-label">Display Order</label>
+                            <input type="number" class="form-control" id="display_order" name="display_order" value="0" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="form-btn">
+                            <i class="fas fa-plus"></i> Add Item
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Existing Items -->
+            <h3><i class="fas fa-list"></i> Current Display Items</h3>
+            {% for item in items %}
+            <div class="item-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="item-name">{{ item.name }}</div>
+                        {% if item.description %}
+                            <div class="item-description">{{ item.description }}</div>
+                        {% endif %}
+                        <div class="mt-2">
+                            <span class="item-price">€{{ "%.2f"|format(item.price_cents / 100) }}</span>
+                            <span class="item-category">{{ item.category.title() }}</span>
+                            <span class="item-status {% if not item.is_active %}inactive{% endif %}">
+                                {% if item.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <form method="POST" action="{{ url_for('routes.update_display_item') }}" style="display: inline;">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <input type="hidden" name="name" value="{{ item.name }}">
+                            <input type="hidden" name="description" value="{{ item.description or '' }}">
+                            <input type="hidden" name="price_euros" value="{{ item.price_cents / 100 }}">
+                            <input type="hidden" name="category" value="{{ item.category }}">
+                            <input type="hidden" name="display_order" value="{{ item.display_order }}">
+                            <input type="hidden" name="is_active" value="{% if item.is_active %}on{% endif %}">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </form>
+                        <a href="{{ url_for('routes.delete_display_item', item_id=item.id) }}" 
+                           class="btn btn-sm btn-danger"
+                           onclick="return confirm('Are you sure you want to delete {{ item.name }}?')">
+                            <i class="fas fa-trash"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% if not items %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>No display items yet:</strong> Add some items to create a price list for customers.
+            </div>
+            {% endif %}
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('routes.index') }}" class="back-button">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Admin Panel
+                </a>
+                <a href="{{ url_for('routes.price_list') }}" class="back-button ms-2">
+                    <i class="fas fa-tags me-2"></i>View Price List
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme Switcher for Display Items Management
+        class ThemeSwitcher {
+            constructor() {
+                this.currentTheme = localStorage.getItem('selectedTheme') || 'coffee';
+                this.init();
+            }
+
+            init() {
+                // Set initial theme
+                this.applyTheme(this.currentTheme);
+            }
+
+            applyTheme(theme) {
+                document.body.setAttribute('data-theme', theme);
+            }
+        }
+
+        // Initialize theme when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            new ThemeSwitcher();
+        });
+    </script>
+</body>
+</html>
