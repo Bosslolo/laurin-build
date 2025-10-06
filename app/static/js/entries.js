@@ -29,7 +29,7 @@ class BeverageConsumption {
     
     loadBeverageData() {
         // Load beverage data from the DOM
-        const beverageItems = document.querySelectorAll('.beverage-item');
+        const beverageItems = document.querySelectorAll('.beverage-card');
         beverageItems.forEach(item => {
             const beverageId = item.dataset.beverageId;
             const name = item.querySelector('.beverage-name').textContent;
@@ -44,7 +44,7 @@ class BeverageConsumption {
         // Load consumed data from the DOM (if available)
         const consumedCounts = document.querySelectorAll('.consumed-count');
         consumedCounts.forEach(count => {
-            const beverageItem = count.closest('.beverage-item');
+            const beverageItem = count.closest('.beverage-card');
             const beverageId = beverageItem.dataset.beverageId;
             const consumed = parseInt(count.textContent) || 0;
             
@@ -79,7 +79,7 @@ class BeverageConsumption {
         document.querySelectorAll('.quantity-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const action = e.currentTarget.dataset.action;
-                const beverageItem = e.currentTarget.closest('.beverage-item');
+                const beverageItem = e.currentTarget.closest('.beverage-card');
                 const beverageId = beverageItem.dataset.beverageId;
                 
                 this.updateQuantity(beverageId, action);
@@ -415,26 +415,8 @@ class PinManagement {
 }
 
 // Initialize beverage consumption when DOM is loaded
-// Theme Switcher Class for Entries
-class ThemeSwitcher {
-    constructor() {
-        this.currentTheme = localStorage.getItem('selectedTheme') || 'coffee';
-        this.init();
-    }
-
-    init() {
-        // Set initial theme
-        this.applyTheme(this.currentTheme);
-    }
-
-    applyTheme(theme) {
-        document.body.setAttribute('data-theme', theme);
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     new BeverageConsumption();
     new PinManagement();
-    new ThemeSwitcher();
     console.log('Beverage consumption system initialized!');
 });

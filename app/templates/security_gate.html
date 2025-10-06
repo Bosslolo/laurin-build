@@ -8,33 +8,18 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            /* fallback accent vars if base stylesheet not yet loaded */
+            --accent1:#8B4513; --accent2:#D2691E; --gradient-accent:linear-gradient(135deg,#8B4513 0%, #D2691E 100%);
+            min-height:100vh;
+            display:flex; align-items:center; justify-content:center;
+            background: var(--page-bg, linear-gradient(135deg, #8B4513 0%, #A0522D 25%, #D2691E 50%, #CD853F 75%, #DEB887 100%));
         }
-        
-        /* Seasonal Theme Support */
-        body[data-theme="coffee"] {
-            background: linear-gradient(135deg, #8B4513 0%, #A0522D 15%, #D2691E 30%, #CD853F 45%, #DEB887 60%, #F5DEB3 75%, #FFF8DC 90%, #FFFAF0 100%);
-        }
-        
-        body[data-theme="spring"] {
-            background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 15%, #8BC34A 30%, #AED581 45%, #C8E6C9 60%, #DCEDC8 75%, #F1F8E9 90%, #FFFFFF 100%);
-        }
-        
-        body[data-theme="summer"] {
-            background: linear-gradient(135deg, #FF9800 0%, #FFB74D 15%, #FFC107 30%, #FFD54F 45%, #FFECB3 60%, #FFF3E0 75%, #FFF8E1 90%, #FFFFFF 100%);
-        }
-        
-        body[data-theme="autumn"] {
-            background: linear-gradient(135deg, #FF5722 0%, #FF7043 15%, #FF9800 30%, #FFB74D 45%, #FFCC80 60%, #FFE0B2 75%, #FFF3E0 90%, #FFFFFF 100%);
-        }
-        
-        body[data-theme="winter"] {
-            background: linear-gradient(135deg, #2196F3 0%, #42A5F5 15%, #64B5F6 30%, #90CAF9 45%, #BBDEFB 60%, #E3F2FD 75%, #F3E5F5 90%, #FFFFFF 100%);
-        }
+        /* Theme background helpers (can be centralized later) */
+        body[data-theme="coffee"] { --page-bg: linear-gradient(135deg,#8B4513 0%,#A0522D 15%,#D2691E 30%,#CD853F 45%,#DEB887 60%,#F5DEB3 75%,#FFF8DC 90%,#FFFAF0 100%); }
+        body[data-theme="spring"] { --page-bg: linear-gradient(135deg,#4CAF50 0%,#66BB6A 15%,#8BC34A 30%,#AED581 45%,#C8E6C9 60%,#DCEDC8 75%,#F1F8E9 90%,#FFFFFF 100%); }
+        body[data-theme="summer"] { --page-bg: linear-gradient(135deg,#FF9800 0%,#FFB74D 15%,#FFC107 30%,#FFD54F 45%,#FFECB3 60%,#FFF3E0 75%,#FFF8E1 90%,#FFFFFF 100%); }
+        body[data-theme="autumn"] { --page-bg: linear-gradient(135deg,#FF5722 0%,#FF7043 15%,#FF9800 30%,#FFB74D 45%,#FFCC80 60%,#FFE0B2 75%,#FFF3E0 90%,#FFFFFF 100%); }
+        body[data-theme="winter"] { --page-bg: linear-gradient(135deg,#2196F3 0%,#42A5F5 15%,#64B5F6 30%,#90CAF9 45%,#BBDEFB 60%,#E3F2FD 75%,#F3E5F5 90%,#FFFFFF 100%); }
         .security-gate-card {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
@@ -45,11 +30,7 @@
             max-width: 400px;
             width: 100%;
         }
-        .security-title {
-            color: #5a6fd8;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
+        .security-title { color: var(--accent1); font-weight:700; margin-bottom:1rem; }
         .security-subtitle {
             color: #6c757d;
             font-size: 0.9rem;
@@ -92,12 +73,10 @@
             text-decoration: none;
             font-size: 0.9rem;
         }
-        .back-link:hover {
-            color: #667eea;
-        }
+        .back-link:hover { color: var(--accent2); }
     </style>
 </head>
-<body>
+<body data-theme="{{ theme|default('coffee') }}" class="theme-{{ theme|default('coffee') }}">
     <div class="container">
         <div class="security-gate-card">
             <div class="text-center mb-4">

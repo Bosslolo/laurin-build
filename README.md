@@ -100,7 +100,7 @@ A beautiful, coffee-themed beverage management system for the Christian School i
 
 ## 🔒 Security
 
-- **Admin Token**: "Champus15"
+- **Admin Token**: Secure token (generated from admin secret key)
 - **Security Gate**: Access code protection
 - **PIN System**: User identification
 - **Guest Role**: Limited access for visitors

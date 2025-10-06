@@ -4,38 +4,138 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Price Management - Laurin Build</title>
+    <meta name="theme-color" content="{{ theme_color|default('#222222') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Dynamic Theme Support with CSS Variables */
         body {
-            background: linear-gradient(135deg, #8B4513 0%, #A0522D 15%, #D2691E 30%, #CD853F 45%, #DEB887 60%, #F5DEB3 75%, #FFF8DC 90%, #FFFAF0 100%);
+            /* Default coffee theme variables */
+            --accent1: #8B4513;
+            --accent2: #D2691E;
+            --accent3: #CD853F;
+            --accent4: #DEB887;
+            --accent5: #F5DEB3;
+            --accent6: #FFF8DC;
+            --accent7: #FFFAF0;
+            --gradient-main: linear-gradient(135deg, #8B4513 0%, #A0522D 15%, #D2691E 30%, #CD853F 45%, #DEB887 60%, #F5DEB3 75%, #FFF8DC 90%, #FFFAF0 100%);
+            --container-bg: linear-gradient(135deg, rgba(250, 248, 245, 0.95) 0%, rgba(245, 222, 179, 0.9) 30%, rgba(255, 248, 220, 0.95) 70%, rgba(250, 240, 230, 0.9) 100%);
+            --container-shadow: 0 20px 40px rgba(139, 69, 19, 0.3), 0 8px 16px rgba(210, 105, 30, 0.2);
+            --container-border: 2px solid rgba(139, 69, 19, 0.1);
+            --button-primary: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%);
+            --button-primary-hover: linear-gradient(135deg, #D2691E 0%, #8B4513 100%);
+            --text-primary: #2E2E2E;
+            --text-secondary: #5D4E37;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #fd7e14;
+            
+            background: var(--gradient-main);
             min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
-        /* Seasonal Theme Support */
+        /* Coffee Theme (Default) */
+        body[data-theme="coffee"] {
+            --accent1: #8B4513;
+            --accent2: #D2691E;
+            --accent3: #CD853F;
+            --accent4: #DEB887;
+            --accent5: #F5DEB3;
+            --accent6: #FFF8DC;
+            --accent7: #FFFAF0;
+            --gradient-main: linear-gradient(135deg, #8B4513 0%, #A0522D 15%, #D2691E 30%, #CD853F 45%, #DEB887 60%, #F5DEB3 75%, #FFF8DC 90%, #FFFAF0 100%);
+            --container-bg: linear-gradient(135deg, rgba(250, 248, 245, 0.95) 0%, rgba(245, 222, 179, 0.9) 30%, rgba(255, 248, 220, 0.95) 70%, rgba(250, 240, 230, 0.9) 100%);
+            --container-shadow: 0 20px 40px rgba(139, 69, 19, 0.3), 0 8px 16px rgba(210, 105, 30, 0.2);
+            --container-border: 2px solid rgba(139, 69, 19, 0.1);
+            --button-primary: linear-gradient(135deg, #8B4513 0%, #D2691E 50%, #CD853F 100%);
+            --button-primary-hover: linear-gradient(135deg, #D2691E 0%, #8B4513 100%);
+            --text-primary: #2E2E2E;
+            --text-secondary: #5D4E37;
+        }
+        
+        /* Spring Theme */
         body[data-theme="spring"] {
-            background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 15%, #8BC34A 30%, #AED581 45%, #C8E6C9 60%, #DCEDC8 75%, #F1F8E9 90%, #FFFFFF 100%);
+            --accent1: #4CAF50;
+            --accent2: #66BB6A;
+            --accent3: #8BC34A;
+            --accent4: #AED581;
+            --accent5: #C8E6C9;
+            --accent6: #DCEDC8;
+            --accent7: #F1F8E9;
+            --gradient-main: linear-gradient(135deg, #4CAF50 0%, #66BB6A 15%, #8BC34A 30%, #AED581 45%, #C8E6C9 60%, #DCEDC8 75%, #F1F8E9 90%, #FFFFFF 100%);
+            --container-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(200, 230, 201, 0.9) 30%, rgba(174, 213, 129, 0.95) 70%, rgba(255, 255, 255, 0.9) 100%);
+            --container-shadow: 0 20px 40px rgba(76, 175, 80, 0.3), 0 8px 16px rgba(102, 187, 106, 0.2);
+            --container-border: 2px solid rgba(76, 175, 80, 0.1);
+            --button-primary: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+            --button-primary-hover: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+            --text-primary: #1B5E20;
+            --text-secondary: #2E7D32;
         }
         
+        /* Summer Theme */
         body[data-theme="summer"] {
-            background: linear-gradient(135deg, #FF9800 0%, #FFB74D 15%, #FFC107 30%, #FFD54F 45%, #FFECB3 60%, #FFF3E0 75%, #FFF8E1 90%, #FFFFFF 100%);
+            --accent1: #FF9800;
+            --accent2: #FFB74D;
+            --accent3: #FFC107;
+            --accent4: #FFD54F;
+            --accent5: #FFECB3;
+            --accent6: #FFF3E0;
+            --accent7: #FFF8E1;
+            --gradient-main: linear-gradient(135deg, #FF9800 0%, #FFB74D 15%, #FFC107 30%, #FFD54F 45%, #FFECB3 60%, #FFF3E0 75%, #FFF8E1 90%, #FFFFFF 100%);
+            --container-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 243, 224, 0.9) 30%, rgba(255, 213, 79, 0.95) 70%, rgba(255, 255, 255, 0.9) 100%);
+            --container-shadow: 0 20px 40px rgba(255, 152, 0, 0.3), 0 8px 16px rgba(255, 183, 77, 0.2);
+            --container-border: 2px solid rgba(255, 152, 0, 0.1);
+            --button-primary: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+            --button-primary-hover: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
+            --text-primary: #E65100;
+            --text-secondary: #F57C00;
         }
         
+        /* Autumn Theme */
         body[data-theme="autumn"] {
-            background: linear-gradient(135deg, #FF5722 0%, #FF7043 15%, #FF9800 30%, #FFB74D 45%, #FFCC80 60%, #FFE0B2 75%, #FFF3E0 90%, #FFFFFF 100%);
+            --accent1: #FF5722;
+            --accent2: #FF7043;
+            --accent3: #FF9800;
+            --accent4: #FFB74D;
+            --accent5: #FFCC80;
+            --accent6: #FFE0B2;
+            --accent7: #FFF3E0;
+            --gradient-main: linear-gradient(135deg, #FF5722 0%, #FF7043 15%, #FF9800 30%, #FFB74D 45%, #FFCC80 60%, #FFE0B2 75%, #FFF3E0 90%, #FFFFFF 100%);
+            --container-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 224, 178, 0.9) 30%, rgba(255, 183, 77, 0.95) 70%, rgba(255, 255, 255, 0.9) 100%);
+            --container-shadow: 0 20px 40px rgba(255, 87, 34, 0.3), 0 8px 16px rgba(255, 112, 67, 0.2);
+            --container-border: 2px solid rgba(255, 87, 34, 0.1);
+            --button-primary: linear-gradient(135deg, #FF5722 0%, #FF7043 100%);
+            --button-primary-hover: linear-gradient(135deg, #FF7043 0%, #FF5722 100%);
+            --text-primary: #BF360C;
+            --text-secondary: #D84315;
         }
         
+        /* Winter Theme */
         body[data-theme="winter"] {
-            background: linear-gradient(135deg, #2196F3 0%, #42A5F5 15%, #64B5F6 30%, #90CAF9 45%, #BBDEFB 60%, #E3F2FD 75%, #F3E5F5 90%, #FFFFFF 100%);
+            --accent1: #2196F3;
+            --accent2: #42A5F5;
+            --accent3: #64B5F6;
+            --accent4: #90CAF9;
+            --accent5: #BBDEFB;
+            --accent6: #E3F2FD;
+            --accent7: #F3E5F5;
+            --gradient-main: linear-gradient(135deg, #2196F3 0%, #42A5F5 15%, #64B5F6 30%, #90CAF9 45%, #BBDEFB 60%, #E3F2FD 75%, #F3E5F5 90%, #FFFFFF 100%);
+            --container-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(187, 222, 251, 0.9) 30%, rgba(144, 202, 249, 0.95) 70%, rgba(255, 255, 255, 0.9) 100%);
+            --container-shadow: 0 20px 40px rgba(33, 150, 243, 0.3), 0 8px 16px rgba(66, 165, 245, 0.2);
+            --container-border: 2px solid rgba(33, 150, 243, 0.1);
+            --button-primary: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%);
+            --button-primary-hover: linear-gradient(135deg, #42A5F5 0%, #2196F3 100%);
+            --text-primary: #0D47A1;
+            --text-secondary: #1565C0;
         }
         
         .price-management-container {
-            background: linear-gradient(135deg, rgba(250, 248, 245, 0.95) 0%, rgba(245, 222, 179, 0.9) 30%, rgba(255, 248, 220, 0.95) 70%, rgba(250, 240, 230, 0.9) 100%);
+            background: var(--container-bg);
             border-radius: 25px;
-            box-shadow: 0 20px 40px rgba(139, 69, 19, 0.3), 0 8px 16px rgba(210, 105, 30, 0.2);
+            box-shadow: var(--container-shadow);
             backdrop-filter: blur(20px);
-            border: 2px solid rgba(139, 69, 19, 0.1);
+            border: var(--container-border);
             padding: 2rem;
             margin: 2rem auto;
             max-width: 1200px;
@@ -45,7 +145,7 @@
             text-align: center;
             margin-bottom: 2rem;
             padding-bottom: 1rem;
-            border-bottom: 3px solid #8B4513;
+            border-bottom: 3px solid var(--accent1);
         }
         
         .price-management-title {
@@ -168,7 +268,7 @@
         }
     </style>
 </head>
-<body>
+<body data-theme="{{ theme|default('coffee') }}" class="theme-{{ theme|default('coffee') }}">
     <div class="container">
         <div class="price-management-container">
             <div class="price-management-header">
@@ -258,5 +358,6 @@
             new ThemeSwitcher();
         });
     </script>
+    <script src="{{ url_for('static', filename='js/main/theme.js') }}" defer></script>
 </body>
 </html>

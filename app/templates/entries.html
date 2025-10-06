@@ -7,17 +7,22 @@
     
     <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kaffeeliste">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="{{ theme_color|default('#222222') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     
     <!-- External CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/entries.css') }}" rel="stylesheet">
 </head>
-<body>
+<body data-theme="{{ theme|default('coffee') }}" class="theme-{{ theme|default('coffee') }}">
+<script>
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/static/js/sw.js').catch(console.error); }
+window.addEventListener('load', function(){ setTimeout(function(){ window.scrollTo(0,1); }, 300); });
+</script>
     
     <div class="container">
         <div class="main-container">
@@ -33,69 +38,54 @@
              else:
              1. beverage added to invoice of current month -->
 
-            <div class="row">
-                <div class="col-12">
-                    <div class="user-info-card">
-                        {% if user.id == 0 %}
-                        <!-- Guest user - show name and role centered, no PIN management -->
-                        <div class="pin-management-section">
-                            <h4 class="user-info-title-no-pin">{{ user.first_name }} {{ user.last_name }}</h4>
-                            <div class="role-and-pin-container">
-                                <span class="user-role-badge-unified">{{ user.role.name if user.role else 'No Role' }}</span>
-                            </div>
-                        </div>
-                        {% elif user.pin_hash %}
-                        <!-- User with PIN - show name and role centered, change PIN button on the right -->
-                        <div class="user-info-header">
-                            <div class="user-info-main">
-                                <h4 class="user-info-title">{{ user.first_name }} {{ user.last_name }}</h4>
-                                <span class="user-role-badge-unified">{{ user.role.name if user.role else 'No Role' }}</span>
-                            </div>
-                            <div class="user-info-actions">
-                                <button id="changePinBtn" class="btn btn-outline-secondary btn-sm change-pin-btn" title="Change PIN">
-                                    <i class="fas fa-key"></i>
-                                    Change PIN
-                                </button>
-                            </div>
-                        </div>
-                        {% else %}
-                        <!-- User without PIN - show name, role and create PIN button centered -->
-                        <div class="pin-management-section">
-                            <h4 class="user-info-title-no-pin">{{ user.first_name }} {{ user.last_name }}</h4>
-                            <div class="role-and-pin-container">
-                                <span class="user-role-badge-unified">{{ user.role.name if user.role else 'No Role' }}</span>
-                                <button id="createPinBtn" class="btn btn-success pin-management-btn">
-                                    <i class="fas fa-plus"></i>
-                                    Create PIN
-                                </button>
-                            </div>
-                        </div>
-                        {% endif %}
+            <!-- User Info Section - Centered Layout -->
+            <div class="user-info-section">
+                <div class="user-info-container">
+                    <!-- User Name - Centered at top -->
+                    <h2 class="user-name">{{ user.first_name }} {{ user.last_name }}</h2>
+                    
+                    <!-- User Role - Centered below name -->
+                    <div class="user-role">{{ user.role.name if user.role else 'No Role' }}</div>
+                    
+                    <!-- PIN Management - Positioned appropriately -->
+                    {% if user.id == 0 %}
+                    <!-- Guest user - no PIN management -->
+                    {% elif user.pin_hash %}
+                    <!-- User with PIN - change PIN button on the right -->
+                    <div class="pin-actions">
+                        <button id="changePinBtn" class="change-pin-button" title="Change PIN">
+                            <i class="fas fa-key"></i>
+                            Change PIN
+                        </button>
                     </div>
+                    {% else %}
+                    <!-- User without PIN - create PIN button centered -->
+                    <div class="pin-actions">
+                        <button id="createPinBtn" class="create-pin-button">
+                            <i class="fas fa-plus"></i>
+                            Create PIN
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
             <!-- Selection Interface Container -->
             <div class="selection-container">
-                <!-- Beverage Consumption Interface -->
+                <!-- Beverage Selection Section -->
                 <div class="beverage-section">
-                    <h5 class="section-title">
+                    <h3 class="beverage-section-title">
                         <i class="fas fa-coffee"></i>
-                        Beverage Selection
-                    </h5>
+                        Getränkeauswahl
+                    </h3>
                     
-                    <div class="beverage-list">
+                    <div class="beverage-grid">
                         {% for beverage in beverages %}
                             {% if beverage.category == 'drink' %}
                                 {% set price_info = price_lookup.get(beverage.id) %}
-                                <div class="beverage-item" data-beverage-id="{{ beverage.id }}">
-                                    <div class="consumed-count-section">
-                                        <span class="consumed-count">0</span>
-                                        <small class="consumed-label">consumed</small>
-                                    </div>
-                                    
-                                    <div class="beverage-info">
-                                        <h6 class="beverage-name">{{ beverage.name }}</h6>
+                                <div class="beverage-card" data-beverage-id="{{ beverage.id }}">
+                                    <div class="beverage-header">
+                                        <h4 class="beverage-name">{{ beverage.name }}</h4>
                                         {% if price_info %}
                                             <span class="beverage-price">{{ "%.2f"|format(price_info.price_cents / 100) }} €</span>
                                         {% else %}
@@ -104,27 +94,32 @@
                                     </div>
                                     
                                     <div class="beverage-controls">
-                                        {% if price_info %}
+                                        <div class="controls-row">
                                             <div class="quantity-controls">
-                                                <button class="btn btn-outline-secondary quantity-btn" data-action="decrease">
-                                                    <i class="fas fa-minus"></i>
-                                                </button>
-                                                <span class="quantity-display">0</span>
-                                                <button class="btn btn-outline-secondary quantity-btn" data-action="increase">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
+                                                {% if price_info %}
+                                                    <button class="quantity-btn decrease-btn" data-action="decrease">
+                                                        <i class="fas fa-minus"></i>
+                                                    </button>
+                                                    <span class="quantity-display">0</span>
+                                                    <button class="quantity-btn increase-btn" data-action="increase">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                {% else %}
+                                                    <button class="quantity-btn decrease-btn" disabled title="No price set for this item">
+                                                        <i class="fas fa-minus"></i>
+                                                    </button>
+                                                    <span class="quantity-display">0</span>
+                                                    <button class="quantity-btn increase-btn" disabled title="No price set for this item">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                {% endif %}
                                             </div>
-                                        {% else %}
-                                            <div class="quantity-controls">
-                                                <button class="btn btn-outline-secondary quantity-btn" disabled title="No price set for this item">
-                                                    <i class="fas fa-minus"></i>
-                                                </button>
-                                                <span class="quantity-display">0</span>
-                                                <button class="btn btn-outline-secondary quantity-btn" disabled title="No price set for this item">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
+                                            
+                                            <div class="consumed-info">
+                                                <span class="consumed-count">0</span>
+                                                <small class="consumed-label">consumed</small>
                                             </div>
-                                        {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             {% endif %}
@@ -216,102 +211,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/entries.js') }}"></script>
     
-    <!-- Theme Switcher for Entries -->
-    <script>
-        // Theme Switcher Class for Entries
-        class ThemeSwitcher {
-            constructor() {
-                this.currentTheme = localStorage.getItem('selectedTheme') || 'coffee';
-                this.init();
-            }
-
-            init() {
-                // Set initial theme
-                this.applyTheme(this.currentTheme);
-                
-                // Listen for theme changes from other tabs/windows
-                window.addEventListener('storage', (e) => {
-                    if (e.key === 'selectedTheme' && e.newValue) {
-                        this.currentTheme = e.newValue;
-                        this.applyTheme(e.newValue);
-                        console.log(`Entries view: Theme changed via storage to ${e.newValue}`);
-                    }
-                });
-                
-                // Listen for custom theme change events
-                window.addEventListener('themeChanged', (e) => {
-                    this.currentTheme = e.detail.theme;
-                    this.applyTheme(e.detail.theme);
-                    console.log(`Entries view: Theme changed via custom event to ${e.detail.theme}`);
-                });
-                
-                // Listen for postMessage from other windows
-                window.addEventListener('message', (e) => {
-                    if (e.data && e.data.type === 'themeChange') {
-                        this.currentTheme = e.data.theme;
-                        this.applyTheme(e.data.theme);
-                        console.log(`Entries view: Theme changed via postMessage to ${e.data.theme}`);
-                    }
-                });
-                
-                // Also check for theme changes on focus (when user switches back to tab)
-                window.addEventListener('focus', () => {
-                    const storedTheme = localStorage.getItem('selectedTheme') || 'coffee';
-                    if (storedTheme !== this.currentTheme) {
-                        this.currentTheme = storedTheme;
-                        this.applyTheme(storedTheme);
-                        console.log(`Entries view: Theme changed via focus to ${storedTheme}`);
-                    }
-                });
-                
-                // Poll for theme changes every 500ms as a fallback
-                setInterval(() => {
-                    const storedTheme = localStorage.getItem('selectedTheme') || 'coffee';
-                    if (storedTheme !== this.currentTheme) {
-                        this.currentTheme = storedTheme;
-                        this.applyTheme(storedTheme);
-                        console.log(`🔄 Entries view: Theme changed via polling to ${storedTheme}`);
-                    }
-                }, 500);
-                
-                // AGGRESSIVE: Poll server for theme changes every 1 second
-                setInterval(() => {
-                    fetch('/api/get-theme')
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success && data.theme !== this.currentTheme) {
-                                this.currentTheme = data.theme;
-                                localStorage.setItem('selectedTheme', data.theme);
-                                this.applyTheme(data.theme);
-                                console.log(`🌐 Entries view: Theme changed via server polling to ${data.theme}`);
-                            }
-                        })
-                        .catch(err => console.log('Server theme polling failed:', err));
-                }, 1000);
-            }
-
-            applyTheme(theme) {
-                // Force theme application with multiple methods
-                document.body.setAttribute('data-theme', theme);
-                
-                // Also set it as a class for additional CSS targeting
-                document.body.className = document.body.className.replace(/theme-\w+/g, '');
-                document.body.classList.add(`theme-${theme}`);
-                
-                // Force a style recalculation
-                document.body.style.display = 'none';
-                document.body.offsetHeight; // Trigger reflow
-                document.body.style.display = '';
-                
-                // Debug log
-                console.log(`Theme applied to entries: ${theme}`);
-            }
-        }
-
-        // Initialize theme when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            new ThemeSwitcher();
-        });
-    </script>
+    <!-- Advanced Theme System (Server-Driven) -->
+    <script src="{{ url_for('static', filename='js/main/theme.js') }}" defer></script>
 </body>
 </html>

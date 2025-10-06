@@ -1,17 +1,45 @@
-from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash, abort, session
-from .models import roles, beverages, users, consumptions, invoices, beverage_prices, daily_prices, display_items
-from . import db
-from datetime import datetime, date
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash, abort, session, Response
+from .models import roles, beverages, users, consumptions, invoices, beverage_prices, daily_prices, display_items, settings
+from . import db, cache
+from datetime import datetime, date, timedelta
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 import hashlib
 import os
+import time
 from .security import (
     require_admin_auth, require_security_gate, is_admin_mode, 
-    bypass_pin_for_dev, get_security_info, verify_admin_token, SECURITY_GATE_ENABLED
+    bypass_pin_for_dev, get_security_info, verify_admin_credentials, SECURITY_GATE_ENABLED
 )
 
 bp = Blueprint("routes", __name__)
+
+def check_session_timeout():
+    """Check if admin session has timed out (10 minutes)"""
+    if os.getenv('FLASK_APP_MODE') == 'admin' and session.get('admin_authenticated'):
+        last_activity = session.get('last_activity', 0)
+        current_time = time.time()
+        
+        # 10 minutes = 600 seconds
+        if current_time - last_activity > 600:
+            # Session timed out
+            session.clear()
+            flash('🔒 Session expired. Please log in again.', 'warning')
+            return True
+        else:
+            # Update last activity time
+            session['last_activity'] = current_time
+    return False
+
+def require_admin_session(f):
+    """Decorator to check admin session timeout"""
+    def decorated_function(*args, **kwargs):
+        if os.getenv('FLASK_APP_MODE') == 'admin':
+            if check_session_timeout():
+                return redirect(url_for('routes.admin_login'))
+        return f(*args, **kwargs)
+    decorated_function.__name__ = f.__name__
+    return decorated_function
 
 def check_invoice_exists(user_id):
     """Get or create an invoice for the user and current month."""
@@ -68,31 +96,97 @@ def verify_pin(user_id, pin):
         return False
     return user.pin_hash == hash_pin(pin)
 
-@bp.route("/")
-def index():
-    # Get current month start date
+def _index_core():
     current_month = date.today().replace(day=1)
-    
-    # Fetch all users with their roles and total consumption for current month
     users_with_consumption = db.session.query(
         users,
         roles,
         func.coalesce(func.sum(consumptions.quantity), 0).label('total_consumption')
-    ).join(roles, users.role_id == roles.id)\
-     .outerjoin(consumptions, 
-                db.and_(consumptions.user_id == users.id,
-                       consumptions.created_at >= current_month))\
-     .group_by(users.id, roles.id)\
-     .order_by(func.coalesce(func.sum(consumptions.quantity), 0).desc())\
+    ).join(roles, users.role_id == roles.id) \
+     .outerjoin(consumptions, db.and_(consumptions.user_id == users.id, consumptions.created_at >= current_month)) \
+     .group_by(users.id, roles.id) \
+     .order_by(func.coalesce(func.sum(consumptions.quantity), 0).desc()) \
      .all()
-    
-    # Extract just the user objects for template
-    sorted_users = [user_role_consumption[0] for user_role_consumption in users_with_consumption]
-    
-    # Check if we're in admin mode (development mode OR explicitly set to admin)
+    sorted_users = [u[0] for u in users_with_consumption]
+    # Check if admin is authenticated for admin mode
+    is_admin_authenticated = session.get('admin_authenticated', False)
     is_dev = (os.getenv('FLASK_ENV') == 'development' or 
-              os.getenv('FLASK_APP_MODE') == 'admin')
-    return render_template("index.html", users=sorted_users, is_dev=is_dev)
+              (os.getenv('FLASK_APP_MODE') == 'admin' and is_admin_authenticated))
+    initial_subset = sorted_users[:12]
+    theme = settings.get_value('theme', 'coffee') or 'coffee'
+    theme_version = settings.get_value('theme_version', '1') or '1'
+    theme_colors = {
+        'coffee': '#222222',
+        'spring': '#4CAF50',
+        'summer': '#FF9800',
+        'autumn': '#FF5722',
+        'winter': '#2196F3'
+    }
+    theme_color = theme_colors.get(theme, '#222222')
+    return render_template(
+        'index.html',
+        users=initial_subset,
+        users_count=len(sorted_users),
+        is_dev=is_dev,
+        theme=theme,
+        theme_version=theme_version,
+        theme_color=theme_color
+    )
+
+@bp.route("/")
+def index():
+    # Check session timeout for admin users
+    if check_session_timeout():
+        return redirect(url_for('routes.admin_login'))
+    
+    # Check if this is admin port and user is not authenticated
+    app_mode = os.getenv('FLASK_APP_MODE', 'user')
+    if app_mode == 'admin' and not session.get('admin_authenticated', False):
+        return redirect(url_for('routes.admin_login'))
+    
+    # For user mode, ensure no admin session is active (security)
+    if app_mode == 'user' and session.get('admin_authenticated', False):
+        # Clear any admin session on user port for security
+        session.pop('admin_authenticated', None)
+        session.pop('admin_username', None)
+        session.pop('last_activity', None)
+    
+    theme_version = settings.get_value('theme_version', '1') or '1'
+    cache_key = f"index:{theme_version}:{app_mode}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+    rv = _index_core()
+    cache.set(cache_key, rv, timeout=30)
+    return rv
+
+@bp.route('/api/index-data')
+@cache.cached(timeout=30)
+def api_index_data():
+    """Lightweight API to allow progressive loading of the main page user list."""
+    current_month = date.today().replace(day=1)
+    users_with_consumption = db.session.query(
+        users.id,
+        users.first_name,
+        users.last_name,
+        roles.name.label('role_name'),
+        func.coalesce(func.sum(consumptions.quantity), 0).label('total_consumption')
+    ).join(roles, users.role_id == roles.id) \
+     .outerjoin(consumptions, db.and_(consumptions.user_id == users.id, consumptions.created_at >= current_month)) \
+     .group_by(users.id, roles.id) \
+     .order_by(func.coalesce(func.sum(consumptions.quantity), 0).desc()) \
+     .all()
+
+    data = [
+        {
+            'id': row.id,
+            'first_name': row.first_name,
+            'last_name': row.last_name,
+            'role': row.role_name,
+            'total_consumption': int(row.total_consumption or 0)
+        } for row in users_with_consumption
+    ]
+    return jsonify({'users': data, 'count': len(data)})
 
 
 @bp.route("/dev/add_user", methods=["GET", "POST"])
@@ -185,39 +279,42 @@ def dev_get_roles():
 
 @bp.route("/dev/beverages", methods=["GET", "POST"])
 def dev_beverages():
-    """Development-only beverage management."""
-    # Check if we're in admin mode
+    """Development-only beverage management.
+    GET: ?all=1 returns all beverages (active + inactive); default only active.
+    POST: create new beverage.
+    """
     if not (os.getenv('FLASK_ENV') == 'development' or os.getenv('FLASK_APP_MODE') == 'admin'):
         abort(404)
-    
+
     if request.method == "POST":
-        data = request.get_json()
-        name = data.get("name", "").strip()
-        category = data.get("category", "drink")
-        
+        data = request.get_json() or {}
+        name = (data.get("name") or "").strip()
+        category = data.get("category", "drink").strip()
         if not name:
             return jsonify({"success": False, "error": "Beverage name is required"}), 400
-        
         if category not in ['drink', 'food']:
             return jsonify({"success": False, "error": "Category must be 'drink' or 'food'"}), 400
-        
         try:
             new_beverage = beverages(name=name, category=category, status=True)
             db.session.add(new_beverage)
             db.session.commit()
-            
             return jsonify({
                 "success": True,
                 "message": f"{category.title()} '{name}' created successfully",
-                "beverage": {"id": new_beverage.id, "name": new_beverage.name, "category": new_beverage.category}
+                "beverage": {"id": new_beverage.id, "name": new_beverage.name, "category": new_beverage.category, "status": new_beverage.status}
             })
         except Exception as e:
             db.session.rollback()
             return jsonify({"success": False, "error": f"Failed to create beverage: {str(e)}"}), 500
-    
-    # GET request - return all beverages
-    all_beverages = beverages.query.filter_by(status=True).all()
-    return jsonify([{"id": bev.id, "name": bev.name, "category": bev.category} for bev in all_beverages])
+
+    include_all = request.args.get('all', type=int) == 1
+    query = beverages.query
+    if not include_all:
+        query = query.filter_by(status=True)
+    rows = query.order_by(beverages.id.asc()).all()
+    return jsonify([
+        {"id": r.id, "name": r.name, "category": r.category, "status": r.status} for r in rows
+    ])
 
 @bp.route("/dev/prices", methods=["GET", "POST"])
 def dev_prices():
@@ -242,28 +339,59 @@ def dev_prices():
             role = roles.query.get(role_id)
             if not role:
                 return jsonify({"success": False, "error": "Role not found"}), 404
-            
-            # Remove existing prices for this role
-            beverage_prices.query.filter_by(role_id=role_id).delete()
-            
-            # Add new prices for this role
+
+            # Fetch existing prices for role (to update instead of deleting to preserve FK integrity)
+            existing_rows = beverage_prices.query.filter_by(role_id=role_id).all()
+            existing_map = {}
+            duplicates = []
+            for row in existing_rows:
+                if row.beverage_id in existing_map:
+                    duplicates.append(row)
+                else:
+                    existing_map[row.beverage_id] = row
+
+            updated = 0
+            created = 0
+
             for price_data in prices:
                 beverage_id = price_data.get("beverage_id")
                 price_cents = price_data.get("price_cents")
-                
-                if beverage_id and price_cents is not None:
+                if beverage_id is None or price_cents is None:
+                    continue
+                try:
+                    price_cents = int(price_cents)
+                except (TypeError, ValueError):
+                    continue
+
+                # Update existing or create new
+                existing = existing_map.get(beverage_id)
+                if existing:
+                    if existing.price_cents != price_cents:
+                        existing.price_cents = price_cents
+                        updated += 1
+                else:
                     new_price = beverage_prices(
                         role_id=role_id,
                         beverage_id=beverage_id,
-                        price_cents=int(price_cents)
+                        price_cents=price_cents
                     )
                     db.session.add(new_price)
-            
+                    created += 1
+
+            # Attempt to clean duplicate rows that are not referenced by any consumptions
+            cleaned_duplicates = 0
+            for dup in duplicates:
+                if not dup.consumptions:  # safe to delete
+                    db.session.delete(dup)
+                    cleaned_duplicates += 1
+
             db.session.commit()
-            
+            msg = (f"Prices processed for role '{role.name}': {updated} updated, {created} created"
+                   f"; {cleaned_duplicates} duplicate(s) cleaned" if cleaned_duplicates else
+                   f"Prices processed for role '{role.name}': {updated} updated, {created} created")
             return jsonify({
                 "success": True,
-                "message": f"Prices updated successfully for role '{role.name}'"
+                "message": msg
             })
         except Exception as e:
             db.session.rollback()
@@ -320,33 +448,67 @@ def dev_prices_unified():
     try:
         # Get all roles
         all_roles = roles.query.all()
-        
         if not all_roles:
             return jsonify({"success": False, "error": "No roles found"}), 400
-        
-        # Update prices for ALL roles
+
+        total_updated = 0
+        total_created = 0
+        total_cleaned = 0
+
         for role in all_roles:
-            # Remove existing prices for this role
-            beverage_prices.query.filter_by(role_id=role.id).delete()
-            
-            # Add new prices for this role
+            existing_rows = beverage_prices.query.filter_by(role_id=role.id).all()
+            existing_map = {}
+            duplicates = []
+            for row in existing_rows:
+                if row.beverage_id in existing_map:
+                    duplicates.append(row)
+                else:
+                    existing_map[row.beverage_id] = row
+
+            updated = 0
+            created = 0
+
             for price_data in prices:
                 beverage_id = price_data.get("beverage_id")
                 price_cents = price_data.get("price_cents")
-                
-                if beverage_id and price_cents is not None:
+                if beverage_id is None or price_cents is None:
+                    continue
+                try:
+                    price_cents = int(price_cents)
+                except (TypeError, ValueError):
+                    continue
+
+                existing = existing_map.get(beverage_id)
+                if existing:
+                    if existing.price_cents != price_cents:
+                        existing.price_cents = price_cents
+                        updated += 1
+                else:
                     new_price = beverage_prices(
                         role_id=role.id,
                         beverage_id=beverage_id,
-                        price_cents=int(price_cents)
+                        price_cents=price_cents
                     )
                     db.session.add(new_price)
-        
+                    created += 1
+
+            cleaned_duplicates = 0
+            for dup in duplicates:
+                if not dup.consumptions:
+                    db.session.delete(dup)
+                    cleaned_duplicates += 1
+
+            total_updated += updated
+            total_created += created
+            total_cleaned += cleaned_duplicates
+
         db.session.commit()
-        
+        msg = (f"Unified prices processed: {total_updated} updated, {total_created} created"
+               f"; {total_cleaned} duplicate(s) cleaned" if total_cleaned else
+               f"Unified prices processed: {total_updated} updated, {total_created} created")
         return jsonify({
             "success": True,
-            "message": f"Unified prices updated successfully for all {len(all_roles)} roles"
+            "message": msg
         })
     except Exception as e:
         db.session.rollback()
@@ -452,6 +614,24 @@ def dev_delete_user(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "error": f"Failed to delete user: {str(e)}"}), 500
+
+@bp.route('/dev/delete_pin/<int:user_id>', methods=['POST'])
+def dev_delete_pin(user_id):
+    """Development-only: clear a user's PIN hash without deleting the user."""
+    if not (os.getenv('FLASK_ENV') == 'development' or os.getenv('FLASK_APP_MODE') == 'admin'):
+        abort(404)
+    try:
+        user = users.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        if not user.pin_hash:
+            return jsonify({'success': False, 'error': 'User has no PIN set'}), 400
+        user.pin_hash = None
+        db.session.commit()
+        return jsonify({'success': True, 'message': f"PIN deleted for {user.first_name} {user.last_name}"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Failed to delete PIN: {str(e)}'}), 500
 
 @bp.route("/dev/users_manage", methods=["GET"])
 def dev_users_manage():
@@ -633,12 +813,25 @@ def guests():
         }
     }
     
+    # Get current theme and theme color
+    theme = settings.get_value('theme', 'coffee') or 'coffee'
+    theme_colors = {
+        'coffee': '#222222',
+        'spring': '#4CAF50',
+        'summer': '#FF9800',
+        'autumn': '#FF5722',
+        'winter': '#2196F3'
+    }
+    theme_color = theme_colors.get(theme, '#222222')
+    
     return render_template("entries.html", 
                          user=guest_user,
                          beverages=all_beverages,
                          price_lookup=price_lookup,
                          consumptions=[],
-                         user_data=user_dict)
+                         user_data=user_dict,
+                         theme=theme,
+                         theme_color=theme_color)
 
 @bp.route("/entries")
 def entries():
@@ -655,12 +848,19 @@ def entries():
         not bypass_pin_for_dev()):
         return redirect(url_for('routes.security_gate'))
     
-    # Check for admin bypass
-    if session.get('admin_bypass', False) and session.get('bypass_user_id') == user_id:
-        # Admin bypass - no PIN required
+    # Check for admin bypass (only on admin port)
+    if (os.getenv('FLASK_APP_MODE') == 'admin' and 
+        session.get('admin_authenticated', False)):
+        # Admin bypass - no PIN required (only on admin port when authenticated)
         pass
-    # PIN verification is now handled by JavaScript on the frontend
-    # No need to redirect back to index with require_pin parameter
+    else:
+        # PIN verification required for all users (backend security)
+        user = users.query.get(user_id)
+        if user and user.pin_hash:
+            # User has PIN - check if PIN was verified
+            if not session.get(f'pin_verified_{user_id}', False):
+                # PIN not verified - redirect to index with PIN requirement
+                return redirect(url_for('routes.index') + f'?user_id={user_id}&require_pin=true')
     
     # Fetch the specific user with their role
     user = users.query.join(roles, users.role_id == roles.id).filter(users.id == user_id).first()
@@ -710,12 +910,25 @@ def entries():
         } if user.role else None
     }
     
+    # Get current theme and theme color
+    theme = settings.get_value('theme', 'coffee') or 'coffee'
+    theme_colors = {
+        'coffee': '#222222',
+        'spring': '#4CAF50',
+        'summer': '#FF9800',
+        'autumn': '#FF5722',
+        'winter': '#2196F3'
+    }
+    theme_color = theme_colors.get(theme, '#222222')
+    
     return render_template("entries.html", 
                          user=user, 
                          user_data=user_dict,
                          consumptions=user_consumptions,
                          beverages=all_beverages,
-                         price_lookup=price_lookup)
+                         price_lookup=price_lookup,
+                         theme=theme,
+                         theme_color=theme_color)
 
 @bp.route("/verify_pin", methods=["POST"])
 def verify_pin_route():
@@ -730,6 +943,8 @@ def verify_pin_route():
         
         # Use existing verify_pin function
         if verify_pin(user_id, pin):
+            # Set session flag to indicate PIN was verified
+            session[f'pin_verified_{user_id}'] = True
             return jsonify({"success": True})
         else:
             return jsonify({"error": "Invalid PIN"}), 401
@@ -989,6 +1204,17 @@ def monthly_report():
      .order_by(func.extract('year', consumptions.created_at).desc(), func.extract('month', consumptions.created_at).desc())\
      .all()
     
+    # Get current theme and theme color
+    theme = settings.get_value('theme', 'coffee') or 'coffee'
+    theme_colors = {
+        'coffee': '#222222',
+        'spring': '#4CAF50',
+        'summer': '#FF9800',
+        'autumn': '#FF5722',
+        'winter': '#2196F3'
+    }
+    theme_color = theme_colors.get(theme, '#222222')
+    
     return render_template("monthly_report.html", 
                          consumptions=month_consumptions,
                          summary_stats=summary_stats,
@@ -996,7 +1222,9 @@ def monthly_report():
                          available_months=available_months,
                          current_year=year,
                          current_month=month,
-                         report_date=report_date)
+                         report_date=report_date,
+                         theme=theme,
+                         theme_color=theme_color)
 
 # =============================================================================
 # SECURITY ROUTES - Admin Backdoor and Security Gate
@@ -1010,15 +1238,76 @@ def admin_login():
 @bp.route("/admin/authenticate", methods=["POST"])
 def admin_authenticate():
     """Authenticate admin access"""
-    token = request.form.get('admin_token', '').strip()
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '').strip()
     
-    if verify_admin_token(token):
+    # Get client information for logging
+    ip_address = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ.get('REMOTE_ADDR', 'unknown'))
+    user_agent = request.headers.get('User-Agent', 'unknown')
+    
+    # Enhanced device detection
+    device_name = "Unknown Device"
+    if 'Windows NT 10.0' in user_agent:
+        device_name = "Windows 10/11 PC"
+    elif 'Windows NT 6.3' in user_agent:
+        device_name = "Windows 8.1 PC"
+    elif 'Windows NT 6.1' in user_agent:
+        device_name = "Windows 7 PC"
+    elif 'Windows' in user_agent:
+        device_name = "Windows PC"
+    elif 'Macintosh' in user_agent:
+        if 'iPhone' in user_agent:
+            device_name = "iPhone (Safari)"
+        elif 'iPad' in user_agent:
+            device_name = "iPad (Safari)"
+        else:
+            device_name = "Mac (Safari)"
+    elif 'iPhone' in user_agent:
+        device_name = "iPhone"
+    elif 'iPad' in user_agent:
+        device_name = "iPad"
+    elif 'Android' in user_agent:
+        if 'Mobile' in user_agent:
+            device_name = "Android Phone"
+        else:
+            device_name = "Android Tablet"
+    elif 'Linux' in user_agent:
+        device_name = "Linux PC"
+    elif 'Chrome' in user_agent:
+        device_name = "Chrome Browser"
+    elif 'Firefox' in user_agent:
+        device_name = "Firefox Browser"
+    elif 'Safari' in user_agent:
+        device_name = "Safari Browser"
+    elif 'Edge' in user_agent:
+        device_name = "Edge Browser"
+    
+    # Verify credentials securely
+    success = verify_admin_credentials(username, password)
+    
+    # Log the access attempt with smart password logging
+    from .models import admin_access_logs
+    password_to_log = "[HIDDEN]" if success else password  # Show wrong passwords, hide correct one
+    access_log = admin_access_logs(
+        ip_address=ip_address,
+        user_agent=user_agent,
+        device_name=device_name,
+        username_attempted=username,
+        password_attempted=password_to_log,
+        success=success
+    )
+    db.session.add(access_log)
+    db.session.commit()
+    
+    if success:
         session['admin_authenticated'] = True
         session['security_gate_passed'] = True  # Admin bypasses security gate
-        flash('🔐 Admin access granted! You now have full system access.', 'success')
+        session['admin_username'] = username
+        session['last_activity'] = time.time()  # Set initial activity time
+        flash('🔐 Admin access granted! Welcome, Laurin. You now have full system access.', 'success')
         return redirect(url_for('routes.index'))
     else:
-        flash('❌ Invalid admin token. Access denied.', 'error')
+        flash('🚫 ACCESS DENIED: Invalid credentials. Unauthorized access attempt logged.', 'error')
         return redirect(url_for('routes.admin_login'))
 
 @bp.route("/admin/logout")
@@ -1026,8 +1315,31 @@ def admin_logout():
     """Logout admin"""
     session.pop('admin_authenticated', None)
     session.pop('security_gate_passed', None)
-    flash('👋 Admin session ended.', 'info')
+    flash('Admin session ended.', 'info')
     return redirect(url_for('routes.index'))
+
+@bp.route("/admin/access-logs")
+@require_admin_session
+def admin_access_logs_view():
+    """View admin access logs"""
+    from .models import admin_access_logs
+    from sqlalchemy import desc
+    
+    # Get all access logs, ordered by most recent first
+    logs = admin_access_logs.query.order_by(desc(admin_access_logs.created_at)).limit(100).all()
+    
+    # Get current theme and theme color
+    theme = settings.get_value('theme', 'coffee') or 'coffee'
+    theme_colors = {
+        'coffee': '#222222',
+        'spring': '#4CAF50',
+        'summer': '#FF9800',
+        'autumn': '#FF5722',
+        'winter': '#2196F3'
+    }
+    theme_color = theme_colors.get(theme, '#222222')
+    
+    return render_template("admin_access_logs.html", logs=logs, theme=theme, theme_color=theme_color)
 
 @bp.route("/security-gate")
 def security_gate():
@@ -1046,36 +1358,13 @@ def security_gate_verify():
     
     if access_code.upper() in valid_codes:
         session['security_gate_passed'] = True
-        flash('✅ Access granted! Welcome to Laurin Build.', 'success')
+        flash('Access granted! Welcome to Laurin Build.', 'success')
         return redirect(url_for('routes.index'))
     else:
-        flash('❌ Invalid access code. Please try again.', 'error')
+        flash('Invalid access code. Please try again.', 'error')
         return redirect(url_for('routes.security_gate'))
 
-@bp.route("/admin/backdoor")
-@require_admin_auth
-def admin_backdoor():
-    """Admin backdoor - access any user without PIN"""
-    user_id = request.args.get('user_id', type=int)
-    
-    if not user_id:
-        # Show list of all users for backdoor access
-        all_users = users.query.join(roles, users.role_id == roles.id).all()
-        return render_template("admin_backdoor.html", users=all_users)
-    
-    # Direct access to user without PIN
-    user = users.query.join(roles, users.role_id == roles.id).filter(users.id == user_id).first()
-    
-    if not user:
-        flash('❌ User not found.', 'error')
-        return redirect(url_for('routes.admin_backdoor'))
-    
-    # Set admin bypass flag
-    session['admin_bypass'] = True
-    session['bypass_user_id'] = user_id
-    
-    flash(f'🔓 Admin backdoor: Accessing {user.first_name} {user.last_name} without PIN', 'info')
-    return redirect(url_for('routes.entries', user_id=user_id))
+# Admin backdoor removed - PIN bypass now automatic when admin is authenticated
 
 @bp.route("/price-list")
 def price_list():
@@ -1092,11 +1381,24 @@ def price_list():
             'category': item.category
         })
     
+    # Get current theme and theme color
+    theme = settings.get_value('theme', 'coffee') or 'coffee'
+    theme_colors = {
+        'coffee': '#222222',
+        'spring': '#4CAF50',
+        'summer': '#FF9800',
+        'autumn': '#FF5722',
+        'winter': '#2196F3'
+    }
+    theme_color = theme_colors.get(theme, '#222222')
+    
     return render_template("price_list.html", 
-                         price_data=price_data)
+                         price_data=price_data,
+                         theme=theme,
+                         theme_color=theme_color)
 
 @bp.route("/admin/daily-prices")
-@require_admin_auth
+@require_admin_session
 def admin_daily_prices():
     """Admin interface for managing daily prices"""
     from datetime import date, timedelta
@@ -1113,13 +1415,25 @@ def admin_daily_prices():
     # Create a dict for easy lookup
     price_dict = {price.beverage_id: price for price in today_prices}
     
+    # Get current theme and theme color
+    theme = settings.get_value('theme', 'coffee') or 'coffee'
+    theme_colors = {
+        'coffee': '#222222',
+        'spring': '#4CAF50',
+        'summer': '#FF9800',
+        'autumn': '#FF5722',
+        'winter': '#2196F3'
+    }
+    theme_color = theme_colors.get(theme, '#222222')
+    
     return render_template("admin_daily_prices.html", 
                          beverages=all_beverages,
                          today_prices=price_dict,
-                         today=today)
+                         today=today,
+                         theme=theme,
+                         theme_color=theme_color)
 
 @bp.route("/admin/daily-prices/set", methods=["POST"])
-@require_admin_auth
 def set_daily_price():
     """Set daily price for a beverage"""
     from datetime import date
@@ -1129,7 +1443,7 @@ def set_daily_price():
     price_date = request.form.get('price_date', type=str)
     
     if not beverage_id or not price_euros:
-        flash('❌ Missing required fields.', 'error')
+        flash('Missing required fields.', 'error')
         return redirect(url_for('routes.admin_daily_prices'))
     
     # Convert euros to cents
@@ -1164,25 +1478,37 @@ def set_daily_price():
     
     try:
         db.session.commit()
-        flash(f'✅ Daily price updated successfully!', 'success')
+        flash('Daily price updated successfully!', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'❌ Error updating price: {str(e)}', 'error')
+        flash(f'Error updating price: {str(e)}', 'error')
     
     return redirect(url_for('routes.admin_daily_prices'))
 
 @bp.route("/admin/display-items")
-@require_admin_auth
+@require_admin_session
 def admin_display_items():
     """Admin interface for managing display items (like cakes)"""
     # Get all display items
     all_items = display_items.query.order_by(display_items.display_order, display_items.name).all()
     
+    # Get current theme and theme color
+    theme = settings.get_value('theme', 'coffee') or 'coffee'
+    theme_colors = {
+        'coffee': '#222222',
+        'spring': '#4CAF50',
+        'summer': '#FF9800',
+        'autumn': '#FF5722',
+        'winter': '#2196F3'
+    }
+    theme_color = theme_colors.get(theme, '#222222')
+    
     return render_template("admin_display_items.html", 
-                         items=all_items)
+                         items=all_items,
+                         theme=theme,
+                         theme_color=theme_color)
 
 @bp.route("/admin/display-items/add", methods=["POST"])
-@require_admin_auth
 def add_display_item():
     """Add a new display item"""
     name = request.form.get('name', '').strip()
@@ -1192,7 +1518,7 @@ def add_display_item():
     display_order = request.form.get('display_order', type=int) or 0
     
     if not name or not price_euros:
-        flash('❌ Name and price are required.', 'error')
+        flash('Name and price are required.', 'error')
         return redirect(url_for('routes.admin_display_items'))
     
     # Convert euros to cents
@@ -1211,15 +1537,14 @@ def add_display_item():
     try:
         db.session.add(new_item)
         db.session.commit()
-        flash(f'✅ Display item "{name}" added successfully!', 'success')
+        flash(f'Display item "{name}" added successfully!', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'❌ Error adding item: {str(e)}', 'error')
+        flash(f'Error adding item: {str(e)}', 'error')
     
     return redirect(url_for('routes.admin_display_items'))
 
 @bp.route("/admin/display-items/update", methods=["POST"])
-@require_admin_auth
 def update_display_item():
     """Update a display item"""
     item_id = request.form.get('item_id', type=int)
@@ -1231,13 +1556,13 @@ def update_display_item():
     is_active = request.form.get('is_active') == 'on'
     
     if not item_id or not name or not price_euros:
-        flash('❌ Missing required fields.', 'error')
+        flash('Missing required fields.', 'error')
         return redirect(url_for('routes.admin_display_items'))
     
     # Get the item
     item = display_items.query.get(item_id)
     if not item:
-        flash('❌ Item not found.', 'error')
+        flash('Item not found.', 'error')
         return redirect(url_for('routes.admin_display_items'))
     
     # Update the item
@@ -1251,15 +1576,14 @@ def update_display_item():
     
     try:
         db.session.commit()
-        flash(f'✅ Display item "{name}" updated successfully!', 'success')
+        flash(f'Display item "{name}" updated successfully!', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'❌ Error updating item: {str(e)}', 'error')
+        flash(f'Error updating item: {str(e)}', 'error')
     
     return redirect(url_for('routes.admin_display_items'))
 
 @bp.route("/admin/display-items/delete/<int:item_id>")
-@require_admin_auth
 def delete_display_item(item_id):
     """Delete a display item"""
     item = display_items.query.get(item_id)
@@ -1270,46 +1594,169 @@ def delete_display_item(item_id):
     try:
         db.session.delete(item)
         db.session.commit()
-        flash(f'✅ Display item "{item.name}" deleted successfully!', 'success')
+        flash(f'Display item "{item.name}" deleted successfully!', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'❌ Error deleting item: {str(e)}', 'error')
+        flash(f'Error deleting item: {str(e)}', 'error')
     
     return redirect(url_for('routes.admin_display_items'))
 
 @bp.route("/api/set-theme", methods=["POST"])
 def set_theme():
-    """API endpoint to set the current theme globally"""
+    """Set the global theme in settings and increment version so clients can detect and reload."""
     try:
-        data = request.get_json()
-        theme = data.get('theme', 'coffee')
-        
-        # Store theme in session for server-side tracking
-        session['current_theme'] = theme
-        
-        return jsonify({
-            'success': True,
-            'theme': theme,
-            'message': f'Theme set to {theme}'
-        })
+        payload = request.get_json() or {}
+        theme = payload.get('theme', 'coffee')
+        allowed = { 'coffee','spring','summer','autumn','winter' }
+        if theme not in allowed:
+            return jsonify({'success': False, 'error': 'Invalid theme'}), 400
+
+        current_version = settings.get_value('theme_version', '1') or '1'
+        try:
+            next_version = str(int(current_version) + 1)
+        except ValueError:
+            next_version = '1'
+
+        settings.set_value('theme', theme)
+        settings.set_value('theme_version', next_version)
+        db.session.commit()
+
+        # Invalidate cached pages that might embed theme-dependent markup
+        try:
+            cache.delete_memoized(index)
+            cache.delete_memoized(api_index_data)
+        except Exception:
+            pass
+
+        return jsonify({'success': True, 'theme': theme, 'version': next_version})
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @bp.route("/api/get-theme")
 def get_theme():
-    """API endpoint to get the current theme"""
-    theme = session.get('current_theme', 'coffee')
-    return jsonify({
-        'success': True,
-        'theme': theme
-    })
+    """Return current theme and version so clients can auto-refresh on change."""
+    theme = settings.get_value('theme', 'coffee')
+    version = settings.get_value('theme_version', '1')
+    return jsonify({'success': True, 'theme': theme, 'version': version})
+
+@bp.route('/events')
+def sse_events():
+    """Server-Sent Events stream for real-time theme updates.
+    Sends events of type 'theme' with JSON payload {theme, version}.
+    Includes periodic heartbeat to keep connection alive.
+    """
+    def event_stream():
+        import time
+        last_version = None
+        while True:
+            try:
+                current_theme = settings.get_value('theme', 'coffee')
+                current_version = settings.get_value('theme_version', '1')
+                if current_version != last_version:
+                    last_version = current_version
+                    yield f"event: theme\ndata: {{\"theme\":\"{current_theme}\",\"version\":\"{current_version}\"}}\n\n"
+                # Heartbeat every 15s
+                time.sleep(3)
+            except GeneratorExit:
+                break
+            except Exception:
+                # brief backoff on error
+                time.sleep(5)
+    headers = {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'text/event-stream',
+        'Connection': 'keep-alive'
+    }
+    return Response(event_stream(), headers=headers)
 
 @bp.route("/admin/security-status")
-@require_admin_auth
 def admin_security_status():
     """Show current security status"""
     security_info = get_security_info()
     return jsonify(security_info)
+
+# =============================================================================
+# ADMIN: Encoding / Umlaut Repair UI
+# =============================================================================
+
+def _umlaut_guess(word: str) -> str:
+    """Attempt a naive guess replacing '??' with likely German umlauts based on context.
+    This is intentionally conservative; admin can override manually in the UI.
+    Patterns (very rough):
+      ue -> ü  (already proper style, so we don't touch)
+      oe -> ö  (same)
+      ae -> ä  (same)
+      ss may become ß if double-s not at start and preceded by a vowel.
+    For '??' we try to look at surrounding characters; if none match, leave as placeholder so admin edits.
+    """
+    if '??' not in word:
+        return word
+    # Provide a minimal set of character candidates
+    candidates = ['ä','ö','ü','ß']
+    # Replace sequentially – if multiple occurrences, keep placeholders for manual review after first replacement
+    parts = word.split('??')
+    rebuilt = parts[0]
+    for tail in parts[1:]:
+        # Heuristic: if preceding char is a/o/u and next char is consonant, try umlaut of that vowel
+        replacement = 'ä'
+        prev = rebuilt[-1:] if rebuilt else ''
+        nextc = tail[:1]
+        if prev.lower() == 'a':
+            replacement = 'ä'
+        elif prev.lower() == 'o':
+            replacement = 'ö'
+        elif prev.lower() == 'u':
+            replacement = 'ü'
+        elif prev.lower() in 'aeiou' and nextc.lower() == 's':
+            replacement = 'ß'
+        else:
+            # fallback rotate choices to avoid uniform guess
+            replacement = candidates[len(rebuilt) % len(candidates)]
+        rebuilt += replacement + tail
+    return rebuilt
+
+ENCODING_FIXES_ENABLED = bool(os.getenv('ENABLE_ENCODING_FIXES'))
+
+if ENCODING_FIXES_ENABLED:
+    @bp.route('/admin/encoding-fixes')
+    def admin_encoding_fixes():
+        import re  # local import to avoid overhead when disabled
+        suggestions = []
+        suspicious = re.compile(r'\?\?|Ã|�')
+        for u in users.query.limit(200).all():
+            combined = f"{u.first_name} {u.last_name}"
+            if suspicious.search(combined):
+                suggestions.append({
+                    'type': 'user',
+                    'id': u.id,
+                    'field': 'name',
+                    'original': combined,
+                    'guess': _umlaut_guess(combined)
+                })
+        flash(f'Found {len(suggestions)} potential issues (preview only).', 'info')
+        return render_template('admin_encoding_fixes.html', data=suggestions)
+
+    @bp.route('/admin/encoding-fixes/apply', methods=['POST'])
+    def apply_encoding_fixes():
+        import re
+        updates = 0
+        try:
+            suspicious = re.compile(r'\?\?|Ã|�')
+            for u in users.query.limit(200).all():
+                combined = f"{u.first_name} {u.last_name}"
+                if suspicious.search(combined):
+                    guess = _umlaut_guess(combined)
+                    parts = guess.split(' ', 1)
+                    if len(parts) == 2:
+                        u.first_name, u.last_name = parts[0], parts[1]
+                        updates += 1
+            if updates:
+                db.session.commit()
+                flash(f'Applied {updates} encoding corrections.', 'success')
+            else:
+                flash('No changes applied.', 'info')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error applying fixes: {e}', 'danger')
+        return redirect(url_for('routes.admin_encoding_fixes'))

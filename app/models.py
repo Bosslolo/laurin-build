@@ -8,6 +8,10 @@ class roles(db.Model):
 
 class beverage_prices(db.Model):
     __tablename__ = "beverage_prices"
+    __table_args__ = (
+        # Enforce one logical price row per (role, beverage). Historical prices handled via separate tables if needed.
+        db.UniqueConstraint('role_id', 'beverage_id', name='uq_beverage_prices_role_beverage'),
+    )
     id = db.Column(db.Integer, primary_key=True)
     role_id = db.Column(db.Integer, db.ForeignKey("roles.id"), nullable=False)
     beverage_id = db.Column(db.Integer, db.ForeignKey("beverages.id"), nullable=False)
@@ -114,3 +118,36 @@ class payments(db.Model):
     
     # Relationships
     invoice = db.relationship('invoices', backref='payments')
+
+class settings(db.Model):
+    __tablename__ = "settings"
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(100), unique=True, nullable=False)
+    value = db.Column(db.String(255), nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    @staticmethod
+    def get_value(key: str, default=None):
+        row = settings.query.filter_by(key=key).first()
+        return row.value if row else default
+
+    @staticmethod
+    def set_value(key: str, value: str):
+        row = settings.query.filter_by(key=key).first()
+        if not row:
+            row = settings(key=key, value=value)
+            db.session.add(row)
+        else:
+            row.value = value
+        return row
+
+class admin_access_logs(db.Model):
+    __tablename__ = "admin_access_logs"
+    id = db.Column(db.Integer, primary_key=True)
+    ip_address = db.Column(db.String(45), nullable=False)  # IPv6 compatible
+    user_agent = db.Column(db.Text, nullable=True)
+    device_name = db.Column(db.String(255), nullable=True)
+    username_attempted = db.Column(db.String(255), nullable=True)
+    password_attempted = db.Column(db.String(255), nullable=True)
+    success = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

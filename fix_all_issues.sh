@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Comprehensive fix for all recurring database issues
-echo "🔧 Comprehensive Database Fix"
-echo "============================="
+# Comprehensive fix for recurring database issues (encoding, schema, roles)
+echo "Comprehensive Database Fix"
+echo "=========================="
 
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
@@ -16,7 +16,7 @@ if ! docker ps | grep -q "schuelerfirma_db"; then
     exit 1
 fi
 
-echo "🔍 Step 1: Adding missing database columns..."
+echo "[1/6] Adding missing database columns (idempotent)..."
 # Add missing category column if it doesn't exist
 docker exec -i laurin_build_db psql -U user -d db -c "
 DO \$\$
@@ -29,27 +29,35 @@ END
 \$\$;
 "
 
-echo "🔍 Step 2: Fixing character encoding issues..."
-# Fix all German umlauts and special characters - step by step
-echo "  Fixing ü characters..."
-docker exec -i laurin_build_db psql -U user -d db -c "UPDATE users SET first_name = REPLACE(first_name, '├╝', 'ü'), last_name = REPLACE(last_name, '├╝', 'ü') WHERE first_name LIKE '%├╝%' OR last_name LIKE '%├╝%';"
+echo "[2/6] Backing up database before text normalization..."
+BACKUP_FILE="backup_pre_umlaut_fix_$(date +%Y%m%d_%H%M%S).sql"
+docker exec -i laurin_build_db pg_dump -U user -d db > "$BACKUP_FILE" 2>/dev/null && \
+  echo "  Backup written to $BACKUP_FILE" || echo "  WARNING: Backup may have failed (check permissions)"
 
-echo "  Fixing ö characters..."
-docker exec -i laurin_build_db psql -U user -d db -c "UPDATE users SET first_name = REPLACE(first_name, '├Â', 'ö'), last_name = REPLACE(last_name, '├Â', 'ö') WHERE first_name LIKE '%├Â%' OR last_name LIKE '%├Â%';"
+echo "[3/6] Normalizing German umlaut mojibake in users..."
+docker exec -i laurin_build_db psql -U user -d db -c "UPDATE users
+SET first_name = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(first_name,
+    '├ñ','ä'),'├Â','ö'),'├╝','ü'),'├ƒ','ß'),'Ã¼','ü'),'Ã¶','ö'),
+    last_name  = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(last_name,
+    '├ñ','ä'),'├Â','ö'),'├╝','ü'),'├ƒ','ß'),'Ã¼','ü'),'Ã¶','ö')
+WHERE first_name ~ '├|Ã' OR last_name ~ '├|Ã';"
 
-echo "  Fixing ä characters..."
-docker exec -i laurin_build_db psql -U user -d db -c "UPDATE users SET first_name = REPLACE(first_name, '├ñ', 'ä'), last_name = REPLACE(last_name, '├ñ', 'ä') WHERE first_name LIKE '%├ñ%' OR last_name LIKE '%├ñ%';"
+docker exec -i laurin_build_db psql -U user -d db -c "UPDATE users
+SET first_name = REPLACE(REPLACE(REPLACE(first_name,'Ã„','Ä'),'Ã–','Ö'),'Ãœ','Ü'),
+    last_name  = REPLACE(REPLACE(REPLACE(last_name,'Ã„','Ä'),'Ã–','Ö'),'Ãœ','Ü')
+WHERE first_name ~ 'Ã' OR last_name ~ 'Ã';"
 
-echo "  Fixing ß characters..."
-docker exec -i laurin_build_db psql -U user -d db -c "UPDATE users SET first_name = REPLACE(first_name, '├ƒ', 'ß'), last_name = REPLACE(last_name, '├ƒ', 'ß') WHERE first_name LIKE '%├ƒ%' OR last_name LIKE '%├ƒ%';"
+echo "[4/6] Normalizing umlauts in beverages..."
+docker exec -i laurin_build_db psql -U user -d db -c "UPDATE beverages
+SET name = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(name,
+    '├ñ','ä'),'├Â','ö'),'├╝','ü'),'├ƒ','ß'),'Ã¼','ü'),'Ã¶','ö'),'ÃŸ','ß')
+WHERE name ~ '├|Ã';"
 
-echo "  Fixing remaining corrupted characters..."
-docker exec -i laurin_build_db psql -U user -d db -c "UPDATE users SET first_name = REPLACE(first_name, '├', ''), last_name = REPLACE(last_name, '├', '') WHERE first_name LIKE '%├%' OR last_name LIKE '%├%';"
+docker exec -i laurin_build_db psql -U user -d db -c "UPDATE beverages
+SET name = REPLACE(REPLACE(REPLACE(name,'Ã„','Ä'),'Ã–','Ö'),'Ãœ','Ü')
+WHERE name ~ 'Ã';"
 
-echo "  Fixing beverage names..."
-docker exec -i laurin_build_db psql -U user -d db -c "UPDATE beverages SET name = REPLACE(REPLACE(REPLACE(REPLACE(name, '├ñ', 'ä'), '├Â', 'ö'), '├╝', 'ü'), '├ƒ', 'ß') WHERE name LIKE '%├%';"
-
-echo "🔍 Step 3: Ensuring database schema is complete..."
+echo "[5/6] Ensuring database schema is complete (idempotent DDL)..."
 # Ensure all required tables and columns exist
 docker exec -i laurin_build_db psql -U user -d db -c "
 -- Create roles table if it doesn't exist
@@ -128,7 +136,7 @@ CREATE TABLE IF NOT EXISTS payments (
 );
 "
 
-echo "🔍 Step 4: Ensuring essential roles exist..."
+echo "[6/6] Ensuring essential roles exist..."
 # Create essential roles if they don't exist
 docker exec -i laurin_build_db psql -U user -d db -c "
 INSERT INTO roles (id, name) VALUES (1, 'Teachers') ON CONFLICT (id) DO NOTHING;
@@ -137,40 +145,39 @@ INSERT INTO roles (id, name) VALUES (3, 'Staff') ON CONFLICT (id) DO NOTHING;
 INSERT INTO roles (id, name) VALUES (4, 'Guests') ON CONFLICT (id) DO NOTHING;
 "
 
-echo "🔍 Step 5: Restarting application containers..."
-# Restart the application containers to pick up database changes
-docker-compose -f docker-compose.laptop.yml restart admin user
+echo "Restarting application containers (admin, user) to clear any cached data..."
+docker compose -f docker-compose.laptop.yml restart admin user
 
-echo "⏳ Waiting for containers to restart..."
-sleep 10
+echo "Waiting for containers to restart..."
+sleep 8
 
-echo "🔍 Step 6: Verifying the fix..."
+echo "Verifying results (sample rows)..."
 # Check if everything is working
-echo "📊 Database status:"
+echo "Database status:"
 docker exec -i laurin_build_db psql -U user -d db -c "SELECT COUNT(*) as users FROM users;"
 docker exec -i laurin_build_db psql -U user -d db -c "SELECT COUNT(*) as consumptions FROM consumptions;"
 docker exec -i laurin_build_db psql -U user -d db -c "SELECT COUNT(*) as beverages FROM beverages;"
 docker exec -i laurin_build_db psql -U user -d db -c "SELECT COUNT(*) as roles FROM roles;"
 
-echo "🔤 Character encoding check:"
+echo "Character encoding check (should return 0 rows of corruption):"
 docker exec -i laurin_build_db psql -U user -d db -c "SELECT first_name, last_name FROM users WHERE first_name LIKE '%ü%' OR last_name LIKE '%ü%' OR first_name LIKE '%ö%' OR last_name LIKE '%ö%' OR first_name LIKE '%ä%' OR last_name LIKE '%ä%' OR first_name LIKE '%ß%' OR last_name LIKE '%ß%' LIMIT 5;"
 
-echo "🍹 Beverage names check:"
+echo "Beverage names check:"
 docker exec -i laurin_build_db psql -U user -d db -c "SELECT name FROM beverages;"
 
 echo ""
-echo "✅ All issues fixed!"
+echo "Done. Review above for any remaining issues."
 echo ""
-echo "🎉 Your system should now work perfectly:"
+echo "System endpoints:"
 echo "   Admin: http://localhost:5001"
 echo "   User:  http://localhost:5002"
 echo "   Database: http://localhost:8080"
 echo ""
-echo "📋 What was fixed:"
-echo "   ✅ Added missing database columns"
-echo "   ✅ Fixed all German character encoding"
-echo "   ✅ Ensured complete database schema"
-echo "   ✅ Created essential roles"
-echo "   ✅ Restarted application containers"
+echo "Summary of actions:"
+echo "   - Added missing database columns"
+echo "   - Normalized German umlaut encoding in users & beverages"
+echo "   - Ensured complete database schema"
+echo "   - Ensured essential roles exist"
+echo "   - Restarted application containers"
 echo ""
 echo "🔄 Use this script anytime you import a new backup!"

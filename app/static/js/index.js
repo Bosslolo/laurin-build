@@ -4,10 +4,14 @@ class UserSearch {
         this.searchInput = document.getElementById('userSearch');
         this.clearButton = document.getElementById('clearSearch');
         this.resultsCount = document.getElementById('searchResultsCount');
-        this.userCards = document.querySelectorAll('.user-card-container');
         this.userGrid = document.getElementById('userGrid');
         
         this.init();
+    }
+    
+    getUserCards() {
+        // Dynamically get all user cards each time (including newly loaded ones)
+        return document.querySelectorAll('.user-card-container');
     }
     
     init() {
@@ -39,8 +43,9 @@ class UserSearch {
     
     filterCards(searchTerm) {
         let visibleCount = 0;
+        const userCards = this.getUserCards();
         
-        this.userCards.forEach((card, index) => {
+        userCards.forEach((card, index) => {
             const userName = card.dataset.userName.toLowerCase();
             const firstName = card.dataset.userFirst.toLowerCase();
             const lastName = card.dataset.userLast.toLowerCase();
@@ -77,14 +82,16 @@ class UserSearch {
     }
     
     showAllCards() {
-        this.userCards.forEach((card, index) => {
+        const userCards = this.getUserCards();
+        userCards.forEach((card, index) => {
             card.classList.remove('hidden');
             card.style.animationDelay = `${index * 0.1}s`;
         });
     }
     
     getVisibleCards() {
-        return Array.from(this.userCards).filter(card => !card.classList.contains('hidden'));
+        const userCards = this.getUserCards();
+        return Array.from(userCards).filter(card => !card.classList.contains('hidden'));
     }
     
     toggleNoResultsMessage(show) {
@@ -252,6 +259,28 @@ class UserClickHandler {
         userCards.forEach(card => {
             card.addEventListener('click', (e) => this.handleUserClick(e));
         });
+        
+        // Check for require_pin URL parameter
+        this.checkForPinRequirement();
+    }
+    
+    checkForPinRequirement() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('user_id');
+        const requirePin = urlParams.get('require_pin');
+        
+        if (userId && requirePin === 'true') {
+            // Find the user name from the user card
+            const userCard = document.querySelector(`[href*="user_id=${userId}"]`);
+            if (userCard) {
+                const userContainer = userCard.closest('.user-card-container');
+                const userName = userContainer.dataset.userName;
+                if (userName) {
+                    // Show PIN overlay for this user
+                    this.pinAuth.showPinForUser(parseInt(userId), userName);
+                }
+            }
+        }
     }
     
     async handleUserClick(e) {
@@ -914,6 +943,7 @@ class DevUserManagementModal {
             users.forEach(user => {
                 const userItem = document.createElement('div');
                 userItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                const pinBtn = user.has_pin ? `<button class="btn btn-outline-warning btn-sm me-2" onclick="devUserManagementModal.deletePin(${user.id}, '${user.first_name} ${user.last_name}')" title="Delete PIN"><i class='fas fa-key'></i></button>` : '';
                 userItem.innerHTML = `
                     <div>
                         <span class="fw-bold">${user.first_name} ${user.last_name}</span>
@@ -923,15 +953,35 @@ class DevUserManagementModal {
                             PIN: ${user.has_pin ? 'Set' : 'Not set'}
                         </small>
                     </div>
-                    <button class="btn btn-outline-danger btn-sm" onclick="devUserManagementModal.deleteUser(${user.id}, '${user.first_name} ${user.last_name}')" title="Delete User">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="d-flex align-items-center">
+                        ${pinBtn}
+                        <button class="btn btn-outline-danger btn-sm" onclick="devUserManagementModal.deleteUser(${user.id}, '${user.first_name} ${user.last_name}')" title="Delete User">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 `;
                 this.usersList.appendChild(userItem);
             });
         } catch (error) {
             console.error('Failed to load users:', error);
             this.showAlert('Failed to load users', 'danger');
+        }
+    }
+
+    async deletePin(userId, userName){
+        if(!confirm(`Delete PIN for ${userName}?`)) return;
+        try {
+            const res = await fetch(`/dev/delete_pin/${userId}`, {method:'POST', headers:{'Content-Type':'application/json'}});
+            const result = await res.json();
+            if(result.success){
+                this.showAlert(result.message, 'success');
+                this.loadUsers();
+            } else {
+                this.showAlert(result.error || 'Failed to delete PIN', 'danger');
+            }
+        } catch(e){
+            console.error('Error deleting PIN', e);
+            this.showAlert('Network error deleting PIN', 'danger');
         }
     }
     
@@ -1201,7 +1251,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const pinOverlay = document.getElementById('pinOverlay');
     if (pinOverlay) {
         pinOverlay.style.display = 'none';
-        console.log('✅ PIN overlay explicitly hidden on page load');
+    console.log('PIN overlay explicitly hidden on page load');
     }
     
     new UserSearch();
@@ -1220,149 +1270,5 @@ document.addEventListener('DOMContentLoaded', function() {
     window.devUserManagementModal = new DevUserManagementModal();
     window.devItemModal = new DevItemModal();
     window.devPriceModal = new DevPriceModal();
-    new ThemeSwitcher();
 });
 
-// Theme Switcher Class
-class ThemeSwitcher {
-    constructor() {
-        this.currentTheme = localStorage.getItem('selectedTheme') || 'coffee';
-        this.init();
-    }
-
-    init() {
-        // Set initial theme - ALWAYS apply theme regardless of mode
-        this.applyTheme(this.currentTheme);
-        
-        // Add event listeners (only if elements exist)
-        const themeBtn = document.getElementById('themeSwitcherBtn');
-        if (themeBtn) {
-            themeBtn.addEventListener('click', () => {
-                this.showThemeModal();
-            });
-        }
-
-        // Add click listeners to theme options (only if they exist)
-        document.querySelectorAll('.theme-option').forEach(option => {
-            option.addEventListener('click', (e) => {
-                const theme = e.currentTarget.dataset.theme;
-                this.selectTheme(theme);
-            });
-        });
-        
-        // Listen for theme changes from other tabs/windows
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'selectedTheme' && e.newValue) {
-                this.currentTheme = e.newValue;
-                this.applyTheme(e.newValue);
-            }
-        });
-        
-        // Also check for theme changes on focus (when user switches back to tab)
-        window.addEventListener('focus', () => {
-            const storedTheme = localStorage.getItem('selectedTheme') || 'coffee';
-            if (storedTheme !== this.currentTheme) {
-                this.currentTheme = storedTheme;
-                this.applyTheme(storedTheme);
-            }
-        });
-    }
-
-    showThemeModal() {
-        const modal = new bootstrap.Modal(document.getElementById('themeSwitcherModal'));
-        modal.show();
-    }
-
-    selectTheme(theme) {
-        this.currentTheme = theme;
-        this.applyTheme(theme);
-        
-        // Force localStorage update
-        localStorage.setItem('selectedTheme', theme);
-        
-        // AGGRESSIVE APPROACH: Send theme change to server
-        fetch('/api/set-theme', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ theme: theme })
-        }).catch(err => console.log('Server theme update failed:', err));
-        
-        // Wait a moment then force all tabs to update with MULTIPLE methods
-        setTimeout(() => {
-            // Method 1: Storage Event
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'selectedTheme',
-                newValue: theme,
-                oldValue: this.currentTheme,
-                url: window.location.href,
-                storageArea: localStorage
-            }));
-            
-            // Method 2: Custom Event
-            window.dispatchEvent(new CustomEvent('themeChanged', {
-                detail: { theme: theme }
-            }));
-            
-            // Method 3: PostMessage to all windows
-            if (window.opener) {
-                window.opener.postMessage({ type: 'themeChange', theme: theme }, '*');
-            }
-            
-            // Method 4: Broadcast to all windows
-            window.postMessage({ type: 'themeChange', theme: theme }, '*');
-            
-            // Method 5: Force update all iframes
-            document.querySelectorAll('iframe').forEach(iframe => {
-                try {
-                    iframe.contentWindow.postMessage({ type: 'themeChange', theme: theme }, '*');
-                } catch (e) {}
-            });
-            
-            console.log(`🎨 Theme changed to: ${theme} - forcing ALL tabs to update with 5 methods`);
-        }, 100);
-        
-        // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('themeSwitcherModal'));
-        if (modal) {
-            modal.hide();
-        }
-    }
-
-    applyTheme(theme) {
-        // Force theme application with multiple methods
-        document.body.setAttribute('data-theme', theme);
-        
-        // Also set it as a class for additional CSS targeting
-        document.body.className = document.body.className.replace(/theme-\w+/g, '');
-        document.body.classList.add(`theme-${theme}`);
-        
-        // Force a style recalculation
-        document.body.style.display = 'none';
-        document.body.offsetHeight; // Trigger reflow
-        document.body.style.display = '';
-        
-        // Update theme button text
-        const themeBtn = document.getElementById('themeSwitcherBtn');
-        if (themeBtn) {
-            const themeNames = {
-                'coffee': '☕ Coffee',
-                'spring': '🌸 Spring', 
-                'summer': '☀️ Summer',
-                'autumn': '🍂 Autumn',
-                'winter': '❄️ Winter'
-            };
-            themeBtn.innerHTML = `<i class="fas fa-palette"></i> ${themeNames[theme]}`;
-        }
-        
-        // Debug log
-        console.log(`Theme applied: ${theme}`);
-        
-        // Force refresh of all elements
-        const allElements = document.querySelectorAll('*');
-        allElements.forEach(el => {
-            el.style.display = 'none';
-            el.offsetHeight;
-            el.style.display = '';
-        });
-    }
-}

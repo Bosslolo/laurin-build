@@ -1,5 +1,9 @@
 /* Base styles for the Coffee List App - Ultra Cozy Coffee Theme */
 body {
+    /* Base (coffee) theme variables */
+    --accent1: #8B4513;
+    --accent2: #D2691E;
+    --gradient-accent: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
     background: linear-gradient(135deg, #8B4513 0%, #A0522D 25%, #D2691E 50%, #CD853F 75%, #DEB887 100%);
     min-height: 100vh;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -54,11 +58,11 @@ body::before {
 }
 
 .page-title {
-    color: #8B4513;
+    color: var(--accent1);
     font-weight: 700;
     margin-bottom: 2rem;
     text-align: center;
-    text-shadow: 0 2px 4px rgba(139, 69, 19, 0.1);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
 .coffee-icon {
@@ -2684,3 +2688,26 @@ body[data-theme="winter"] .main-container,
 body.theme-winter .main-container {
     background: linear-gradient(135deg, rgba(225, 245, 254, 0.95) 0%, rgba(179, 229, 252, 0.9) 30%, rgba(227, 242, 253, 0.95) 70%, rgba(240, 248, 255, 0.9) 100%) !important;
 }
+
+/* Theme variants override root variables (scoped by body.theme-*) */
+body.theme-spring { --accent1:#4CAF50; --accent2:#66BB6A; --gradient-accent:linear-gradient(135deg,#4CAF50 0%, #66BB6A 100%); }
+body.theme-summer { --accent1:#FF9800; --accent2:#FB8C00; --gradient-accent:linear-gradient(135deg,#FF9800 0%, #FB8C00 100%); }
+body.theme-autumn { --accent1:#FF5722; --accent2:#FF9800; --gradient-accent:linear-gradient(135deg,#FF5722 0%, #FF9800 100%); }
+body.theme-winter { --accent1:#2196F3; --accent2:#64B5F6; --gradient-accent:linear-gradient(135deg,#2196F3 0%, #64B5F6 100%); }
+
+/* Page background gradients (centralized) */
+body.theme-coffee { --page-bg: linear-gradient(135deg,#8B4513 0%,#A0522D 15%,#D2691E 30%,#CD853F 45%,#DEB887 60%,#F5DEB3 75%,#FFF8DC 90%,#FFFAF0 100%); }
+body.theme-spring { --page-bg: linear-gradient(135deg,#4CAF50 0%,#66BB6A 15%,#8BC34A 30%,#AED581 45%,#C8E6C9 60%,#DCEDC8 75%,#F1F8E9 90%,#FFFFFF 100%); }
+body.theme-summer { --page-bg: linear-gradient(135deg,#FF9800 0%,#FFB74D 15%,#FFC107 30%,#FFD54F 45%,#FFECB3 60%,#FFF3E0 75%,#FFF8E1 90%,#FFFFFF 100%); }
+body.theme-autumn { --page-bg: linear-gradient(135deg,#FF5722 0%,#FF7043 15%,#FF9800 30%,#FFB74D 45%,#FFCC80 60%,#FFE0B2 75%,#FFF3E0 90%,#FFFFFF 100%); }
+body.theme-winter { --page-bg: linear-gradient(135deg,#2196F3 0%,#42A5F5 15%,#64B5F6 30%,#90CAF9 45%,#BBDEFB 60%,#E3F2FD 75%,#F3E5F5 90%,#FFFFFF 100%); }
+
+body { background: var(--page-bg, linear-gradient(135deg,#8B4513 0%,#A0522D 25%,#D2691E 50%,#CD853F 75%,#DEB887 100%)); }
+
+/* Utility classes consuming variables */
+.accent-color { color: var(--accent1) !important; }
+.accent-color-secondary { color: var(--accent2) !important; }
+.accent-icon { color: var(--accent1) !important; }
+.accent-icon-secondary { color: var(--accent2) !important; }
+.accent-gradient { background: var(--gradient-accent) !important; color:#fff !important; }
+.accent-border { border-color: var(--accent1) !important; }
