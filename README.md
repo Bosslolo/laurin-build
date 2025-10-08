@@ -84,6 +84,9 @@ A beautiful, coffee-themed beverage management system for the Christian School i
 - Authentication: Personal Access Token
 - Branch: `main`
 
+### Latest Release
+- See `RELEASES.md` for the latest snapshot, what changed, and how to restore the included database backups locally.
+
 ## 🎨 Design System
 
 ### Color Palette
