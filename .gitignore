@@ -1,0 +1,44 @@
+# Database files
+*.db
+*.sql
+*.sqlite
+*.sqlite3
+
+# Backup files
+backups/
+*.backup
+*.bak
+
+# Environment files
+.env
+*.env
+
+# Log files
+*.log
+logs/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+instance/

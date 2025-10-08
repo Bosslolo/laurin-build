@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.first_name }} {{ user.last_name }}</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kaffeeliste">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="{{ theme_color|default('#222222') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- External CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/entries.css') }}" rel="stylesheet">
+</head>
+<body data-theme="{{ theme|default('coffee') }}" class="theme-{{ theme|default('coffee') }}">
+<script>
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/static/js/sw.js').catch(console.error); }
+window.addEventListener('load', function(){ setTimeout(function(){ window.scrollTo(0,1); }, 300); });
+</script>
+    
+    <div class="container">
+        <div class="main-container">
+            <!-- List with all beverages. To add and remove beverages and a count to already consumed beverages. -->
+            <!-- Beverage_name price-single, count, add button - field - remove button -->
+            <!-- Can only remove just added beverages and not the ones that were already consumed. -->
+            <!-- At the bottom a button to confirm the order and a button to cancel the order.
+             If pressed the order is confirmed and the page is redirected to the index page.
+             Beverages are now written to the database fixed and added to the invoice.
+             If first beverage consumption of month:
+             1. invoice created for current month
+             2. beverage added to invoice of current month
+             else:
+             1. beverage added to invoice of current month -->
+
+            <!-- User Info Section - Centered Layout -->
+            <div class="user-info-section">
+                <div class="user-info-container">
+                    <!-- User Name - Centered at top -->
+                    <h2 class="user-name">{{ user.first_name }} {{ user.last_name }}</h2>
+                    
+                    <!-- User Role - Centered below name -->
+                    <div class="user-role">{{ user.role.name if user.role else 'No Role' }}</div>
+                    
+                    <!-- PIN Management - Positioned appropriately -->
+                    {% if user.id == 0 %}
+                    <!-- Guest user - no PIN management -->
+                    {% elif user.pin_hash %}
+                    <!-- User with PIN - change PIN button on the right -->
+                    <div class="pin-actions">
+                        <button id="changePinBtn" class="change-pin-button" title="Change PIN">
+                            <i class="fas fa-key"></i>
+                            Change PIN
+                        </button>
+                    </div>
+                    {% else %}
+                    <!-- User without PIN - create PIN button centered -->
+                    <div class="pin-actions">
+                        <button id="createPinBtn" class="create-pin-button">
+                            <i class="fas fa-plus"></i>
+                            Create PIN
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Selection Interface Container -->
+            <div class="selection-container">
+                <!-- Beverage Selection Section -->
+                <div class="beverage-section">
+                    <h3 class="beverage-section-title">
+                        <i class="fas fa-coffee"></i>
+                        Getränkeauswahl
+                    </h3>
+                    
+                    <div class="beverage-grid">
+                        {% for beverage in beverages %}
+                            {% if beverage.category == 'drink' %}
+                                {% set price_info = price_lookup.get(beverage.id) %}
+                                <div class="beverage-card" data-beverage-id="{{ beverage.id }}">
+                                    <div class="beverage-header">
+                                        <h4 class="beverage-name">{{ beverage.name }}</h4>
+                                        {% if price_info %}
+                                            <span class="beverage-price">{{ "%.2f"|format(price_info.price_cents / 100) }} €</span>
+                                        {% else %}
+                                            <span class="beverage-price text-warning">No price set</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="beverage-controls">
+                                        <div class="controls-row">
+                                            <div class="quantity-controls">
+                                                {% if price_info %}
+                                                    <div class="quantity-input-group">
+                                                        <button class="quantity-btn decrease-btn" data-action="decrease" title="Decrease by 1">
+                                                            <i class="fas fa-minus"></i>
+                                                        </button>
+                                                        <input type="number" class="quantity-input" min="0" max="99" value="0" data-beverage-id="{{ beverage.id }}">
+                                                        <button class="quantity-btn increase-btn" data-action="increase" title="Increase by 1">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="quantity-quick-buttons">
+                                                        <button class="quantity-quick-btn" data-action="add" data-amount="5" title="Add 5">+5</button>
+                                                        <button class="quantity-quick-btn" data-action="add" data-amount="10" title="Add 10">+10</button>
+                                                        <button class="quantity-quick-btn" data-action="add" data-amount="25" title="Add 25">+25</button>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="quantity-input-group">
+                                                        <button class="quantity-btn decrease-btn" disabled title="No price set for this item">
+                                                            <i class="fas fa-minus"></i>
+                                                        </button>
+                                                        <input type="number" class="quantity-input" min="0" max="99" value="0" disabled>
+                                                        <button class="quantity-btn increase-btn" disabled title="No price set for this item">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="quantity-quick-buttons">
+                                                        <button class="quantity-quick-btn" disabled>+5</button>
+                                                        <button class="quantity-quick-btn" disabled>+10</button>
+                                                        <button class="quantity-quick-btn" disabled>+25</button>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="consumed-info">
+                                                <span class="consumed-count">0</span>
+                                                <small class="consumed-label">consumed</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- Action Buttons -->
+            <div class="action-buttons-section">
+                <button class="btn btn-primary btn-lg done-btn" id="doneBtn">
+                    <i class="fas fa-check"></i>
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">
+                        <i class="fas fa-shopping-cart"></i>
+                        Confirm Order
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="order-summary-modal">
+                        <h6>Order Summary:</h6>
+                        <div id="modalOrderItems"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-success" id="confirmOrderBtn">
+                        <i class="fas fa-check"></i>
+                        Confirm Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- PIN Creation Overlay -->
+    <div id="pinOverlay" class="pin-overlay" style="display: none;">
+        <div class="pin-modal">
+            <div class="pin-header">
+                <h4><i class="fas fa-key"></i> Create PIN</h4>
+                <p id="pinUserInfo">Please enter a new PIN for {{ user.first_name }} {{ user.last_name }}</p>
+            </div>
+            <div class="pin-body">
+                <div class="pin-input-container">
+                    <input type="password" id="pinInput" class="pin-input" placeholder="Enter 4-digit PIN" maxlength="4" autocomplete="off" pattern="[0-9]{4}">
+                    <button type="button" id="pinSubmit" class="pin-submit-btn">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+                <div id="pinError" class="pin-error" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Error creating PIN. Please try again.</span>
+                </div>
+                <div class="pin-actions">
+                    <button type="button" id="pinCancel" class="pin-cancel-btn">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pass backend data to JavaScript -->
+    <script>
+        // Pass consumptions data to JavaScript
+        window.consumptionsData = {{ consumptions | tojson }};
+        window.userData = {{ user_data | tojson }};
+        window.userId = {{ user.id }};
+    </script>
+    
+    <!-- External JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/entries.js') }}"></script>
+    
+    <!-- Advanced Theme System (Server-Driven) -->
+    <script src="{{ url_for('static', filename='js/main/theme.js') }}" defer></script>
+</body>
+</html>
