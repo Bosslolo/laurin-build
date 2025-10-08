@@ -23,7 +23,12 @@ services:
       - DATABASE_URL=postgresql://user:password@db:5432/db
       - SECRET_KEY=laptop-dev-secret-key
       - FLASK_APP_MODE=admin  # Admin mode with dev tools
-    command: gunicorn -w 3 -b 0.0.0.0:5000 app.wsgi:app
+    command: gunicorn -w 3 -k gevent --timeout 0 --graceful-timeout 10 -b 0.0.0.0:5000 app.wsgi:app
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   # Flask User Application (Production Mode)
@@ -46,7 +51,12 @@ services:
       - DATABASE_URL=postgresql://user:password@db:5432/db
       - SECRET_KEY=laptop-dev-secret-key
       - FLASK_APP_MODE=user  # User mode without dev tools
-    command: gunicorn -w 3 -b 0.0.0.0:5000 app.wsgi:app
+    command: gunicorn -w 3 -k gevent --timeout 0 --graceful-timeout 10 -b 0.0.0.0:5000 app.wsgi:app
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   # PostgreSQL Database (for production-like testing)

@@ -14,3 +14,6 @@ alembic==1.13.1
 
 # Production server
 gunicorn==22.0.0
+
+# Async workers for long-lived connections (SSE)
+gevent==24.2.1

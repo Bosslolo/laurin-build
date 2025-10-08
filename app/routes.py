@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash, abort, session, Response
+from flask import Blueprint, jsonify, render_template, request, redirect, url_for, flash, abort, session, Response, stream_with_context
 from .models import roles, beverages, users, consumptions, invoices, beverage_prices, daily_prices, display_items, settings
 from . import db, cache
 from datetime import datetime, date, timedelta
@@ -2007,6 +2007,7 @@ def sse_events():
     Sends events of type 'theme' with JSON payload {theme, version}.
     Includes periodic heartbeat to keep connection alive.
     """
+    @stream_with_context
     def event_stream():
         import time
         last_version = None
@@ -2017,8 +2018,9 @@ def sse_events():
                 if current_version != last_version:
                     last_version = current_version
                     yield f"event: theme\ndata: {{\"theme\":\"{current_theme}\",\"version\":\"{current_version}\"}}\n\n"
-                # Heartbeat every 15s
-                time.sleep(3)
+                # Heartbeat to keep connection alive on proxies
+                yield "event: ping\ndata: {}\n\n"
+                time.sleep(15)
             except GeneratorExit:
                 break
             except Exception:
@@ -2030,6 +2032,16 @@ def sse_events():
         'Connection': 'keep-alive'
     }
     return Response(event_stream(), headers=headers)
+
+@bp.route('/health')
+def health():
+    """Lightweight healthcheck endpoint for container orchestration."""
+    try:
+        # Minimal DB check
+        db.session.execute(db.text('SELECT 1'))
+        return jsonify({"status": "ok"})
+    except Exception:
+        return jsonify({"status": "error"}), 500
 
 @bp.route("/admin/security-status")
 def admin_security_status():
