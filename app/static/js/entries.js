@@ -18,13 +18,21 @@ class BeverageConsumption {
     
     getUserId() {
         // Get user ID from backend data or URL parameters
-        if (window.userData && window.userData.id) {
-            return window.userData.id.toString();
+        if (window.userData && Object.prototype.hasOwnProperty.call(window.userData, 'id')) {
+            return String(window.userData.id);
         }
         
         // Fallback to URL parameters
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('user_id');
+        const userIdParam = urlParams.get('user_id');
+        if (userIdParam !== null) return userIdParam;
+        
+        // As a final fallback, if on guests page, treat as guest user (id 0)
+        if (window.location && window.location.pathname && window.location.pathname.includes('/guests')) {
+            return '0';
+        }
+        
+        return null;
     }
     
     loadBeverageData() {
@@ -75,14 +83,34 @@ class BeverageConsumption {
     }
     
     setupEventListeners() {
-        // Quantity control buttons
+        // Quantity control buttons with debouncing
         document.querySelectorAll('.quantity-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
+                // Prevent multiple rapid clicks
+                if (e.currentTarget.disabled) return;
+                
                 const action = e.currentTarget.dataset.action;
                 const beverageItem = e.currentTarget.closest('.beverage-card');
                 const beverageId = beverageItem.dataset.beverageId;
                 
-                this.updateQuantity(beverageId, action);
+                if (beverageId) {
+                    // Store button reference before setTimeout
+                    const button = e.currentTarget;
+                    // Temporarily disable button to prevent rapid clicks
+                    const originalDisabled = button.disabled;
+                    button.disabled = true;
+                    
+                    // Update quantity
+                    this.updateQuantity(beverageId, action);
+                    
+                    // Re-enable button after debounce, but respect original disabled state
+                    setTimeout(() => {
+                        // Only re-enable if it wasn't originally disabled (e.g., for no price items)
+                        if (!originalDisabled) {
+                            button.disabled = false;
+                        }
+                    }, 300); // 300ms debounce
+                }
             });
         });
         
@@ -116,9 +144,19 @@ class BeverageConsumption {
         const quantityDisplay = beverageItem.querySelector('.quantity-display');
         quantityDisplay.textContent = quantity;
         
-        // Update button states
+        // Update button states - only disable decrease button when quantity is 0
         const decreaseBtn = beverageItem.querySelector('[data-action="decrease"]');
-        decreaseBtn.disabled = quantity === 0;
+        const increaseBtn = beverageItem.querySelector('[data-action="increase"]');
+        
+        // Only disable decrease button when quantity is 0, never disable increase button
+        if (decreaseBtn) {
+            decreaseBtn.disabled = quantity === 0;
+        }
+        
+        // Ensure increase button is always enabled (unless it's disabled for other reasons like no price)
+        if (increaseBtn && !increaseBtn.hasAttribute('data-originally-disabled')) {
+            increaseBtn.disabled = false;
+        }
     }
     
     

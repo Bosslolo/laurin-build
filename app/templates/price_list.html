@@ -10,6 +10,7 @@
     <meta name="theme-color" content="{{ theme_color|default('#222222') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
     <style>
         body {
             /* Default coffee theme variables */
@@ -20,6 +21,8 @@
             --accent5: #F5DEB3;
             --accent6: #FFF8DC;
             --accent7: #FFFAF0;
+            /* Used for table header backgrounds; derived from theme accents */
+            --gradient-accent: linear-gradient(135deg, var(--accent1) 0%, var(--accent2) 100%);
             --gradient-main: linear-gradient(135deg, #8B4513 0%, #A0522D 15%, #D2691E 30%, #CD853F 45%, #DEB887 60%, #F5DEB3 75%, #FFF8DC 90%, #FFFAF0 100%);
             --container-bg: linear-gradient(135deg, rgba(250, 248, 245, 0.95) 0%, rgba(245, 222, 179, 0.9) 30%, rgba(255, 248, 220, 0.95) 70%, rgba(250, 240, 230, 0.9) 100%);
             --container-shadow: 0 20px 40px rgba(139, 69, 19, 0.3), 0 8px 16px rgba(210, 105, 30, 0.2);
@@ -119,10 +122,11 @@
         }
         
         .price-list-header { text-align:center; margin-bottom:2rem; padding-bottom:1rem; border-bottom:3px solid var(--accent1); }
+        .price-list-header { background: transparent; }
         
-        .price-list-title { color:var(--accent1); font-weight:700; margin-bottom:0.5rem; text-shadow:0 2px 4px rgba(0,0,0,0.2); }
+        .price-list-title { color:var(--accent1); font-weight:700; margin-bottom:0.5rem; text-shadow:0 2px 4px rgba(0,0,0,0.35); }
         
-        .price-list-subtitle { color:var(--accent2); font-size:1.1rem; font-weight:600; }
+        .price-list-subtitle { color:var(--accent2); font-size:1.1rem; font-weight:600; text-shadow:0 1px 2px rgba(0,0,0,0.25); }
         
         .price-table {
             background: rgba(255, 255, 255, 0.9);

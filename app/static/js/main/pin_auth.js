@@ -37,6 +37,7 @@ class PinAuth {
     }
     
     showPinForUser(userId, userName) {
+        console.log('showPinForUser called with:', { userId, userName }); // Debug log
         this.currentUser = { id: userId, name: userName };
         this.pinUserInfo.textContent = `Please enter PIN for ${userName}`;
         this.pinInput.value = '';
@@ -44,6 +45,7 @@ class PinAuth {
         this.pinOverlay.style.display = 'flex'; // Show the PIN overlay
         this.pinInput.focus();
         document.body.style.overflow = 'hidden';
+        console.log('PIN overlay shown for user:', userName); // Debug log
     }
     
     async submitPin() {
@@ -105,9 +107,11 @@ class UserClickHandler {
     }
     
     init() {
-        const userCards = document.querySelectorAll('.user-card');
-        userCards.forEach(card => {
-            card.addEventListener('click', (e) => this.handleUserClick(e));
+        // Use event delegation to handle clicks on all user cards (including dynamically loaded ones)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.user-card')) {
+                this.handleUserClick(e);
+            }
         });
         
         // Check for require_pin URL parameter
@@ -119,27 +123,44 @@ class UserClickHandler {
         const userId = urlParams.get('user_id');
         const requirePin = urlParams.get('require_pin');
         
+        console.log('Checking PIN requirement - URL params:', {
+            userId: userId,
+            requirePin: requirePin,
+            fullSearch: window.location.search
+        }); // Debug log
+        
         if (userId && requirePin === 'true') {
+            console.log('PIN required for user ID:', userId); // Debug log
             // Find the user name from the user card
             const userCard = document.querySelector(`[href*="user_id=${userId}"]`);
             if (userCard) {
                 const userContainer = userCard.closest('.user-card-container');
                 const userName = userContainer.dataset.userName;
                 if (userName) {
+                    console.log('Showing PIN overlay for user:', userName); // Debug log
                     // Show PIN overlay for this user
                     this.pinAuth.showPinForUser(parseInt(userId), userName);
+                } else {
+                    console.log('User name not found for user ID:', userId); // Debug log
                 }
+            } else {
+                console.log('User card not found for user ID:', userId); // Debug log
             }
+        } else {
+            console.log('No PIN requirement found'); // Debug log
         }
     }
     
     async handleUserClick(e) {
         e.preventDefault();
+        e.stopPropagation();
         
-        const userCard = e.currentTarget;
+        const userCard = e.target.closest('.user-card');
         const userContainer = userCard.closest('.user-card-container');
         const userId = this.extractUserIdFromHref(userCard.href);
         const userName = userContainer.dataset.userName;
+        
+        console.log('User clicked:', userName, 'ID:', userId); // Debug log
         
         // Check if user has PIN by making a simple request
         try {
@@ -150,21 +171,26 @@ class UserClickHandler {
             });
             
             const data = await response.json();
+            console.log('PIN check response:', data); // Debug log
             
             if (response.ok && data.success) {
                 if (data.has_pin) {
                     // User has PIN, show PIN overlay
+                    console.log('User has PIN, showing overlay'); // Debug log
                     this.pinAuth.showPinForUser(userId, userName);
                 } else {
                     // User has no PIN, proceed directly
+                    console.log('User has no PIN, redirecting to:', userCard.href); // Debug log
                     window.location.href = userCard.href;
                 }
             } else {
                 // Fallback: proceed directly
+                console.log('PIN check failed, fallback redirect to:', userCard.href); // Debug log
                 window.location.href = userCard.href;
             }
         } catch (error) {
             // Fallback: proceed directly
+            console.log('PIN check error, fallback redirect to:', userCard.href, error); // Debug log
             window.location.href = userCard.href;
         }
     }

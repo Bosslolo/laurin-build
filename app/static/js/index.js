@@ -23,7 +23,7 @@ class UserSearch {
         this.clearButton.addEventListener('click', () => this.clearSearch());
         
         // Initial count
-        this.updateResultsCount(this.userCards.length);
+        this.updateResultsCount(this.getUserCards().length);
     }
     
     handleSearch(query) {
@@ -117,7 +117,7 @@ class UserSearch {
         this.showAllCards();
         this.clearButton.style.display = 'none';
         this.toggleNoResultsMessage(false);
-        this.updateResultsCount(this.userCards.length);
+        this.updateResultsCount(this.getUserCards().length);
         this.searchInput.focus();
     }
     
@@ -265,22 +265,9 @@ class UserClickHandler {
     }
     
     checkForPinRequirement() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const userId = urlParams.get('user_id');
-        const requirePin = urlParams.get('require_pin');
-        
-        if (userId && requirePin === 'true') {
-            // Find the user name from the user card
-            const userCard = document.querySelector(`[href*="user_id=${userId}"]`);
-            if (userCard) {
-                const userContainer = userCard.closest('.user-card-container');
-                const userName = userContainer.dataset.userName;
-                if (userName) {
-                    // Show PIN overlay for this user
-                    this.pinAuth.showPinForUser(parseInt(userId), userName);
-                }
-            }
-        }
+        // ADMIN INTERFACE: Skip PIN requirement checks
+        console.log('Admin interface - Skipping PIN requirement check');
+        return;
     }
     
     async handleUserClick(e) {
@@ -291,32 +278,11 @@ class UserClickHandler {
         const userId = this.extractUserIdFromHref(userCard.href);
         const userName = userContainer.dataset.userName;
         
-        // Check if user has PIN by making a simple request
-        try {
-            const response = await fetch('/check_user_pin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId })
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok && data.success) {
-                if (data.has_pin) {
-                    // User has PIN, show PIN overlay
-                    this.pinAuth.showPinForUser(userId, userName);
-                } else {
-                    // User has no PIN, proceed directly
-                    window.location.href = userCard.href;
-                }
-            } else {
-                // Fallback: proceed directly
-                window.location.href = userCard.href;
-            }
-        } catch (error) {
-            // Fallback: proceed directly
-            window.location.href = userCard.href;
-        }
+        console.log('Admin interface - User clicked:', userName, 'ID:', userId); // Debug log
+        
+        // ADMIN INTERFACE: Skip PIN authentication and go directly to entries page
+        console.log('Admin interface - Skipping PIN check, redirecting directly to:', userCard.href); // Debug log
+        window.location.href = userCard.href;
     }
     
     extractUserIdFromHref(href) {
@@ -789,6 +755,14 @@ class DevRoleModal {
         this.rolesList = document.getElementById('rolesList');
         this.alert = document.getElementById('manageRolesAlert');
         
+        console.log('DevRoleModal elements:', {
+            modal: !!this.modal,
+            form: !!this.form,
+            saveBtn: !!this.saveBtn,
+            rolesList: !!this.rolesList,
+            alert: !!this.alert
+        }); // Debug log
+        
         if (!this.modal) return;
         
         this.init();
@@ -802,6 +776,11 @@ class DevRoleModal {
     setupEventListeners() {
         this.saveBtn.addEventListener('click', () => this.saveRole());
         
+        this.modal.addEventListener('shown.bs.modal', () => {
+            console.log('Manage Roles modal opened, loading roles...'); // Debug log
+            this.loadRoles();
+        });
+        
         this.modal.addEventListener('hidden.bs.modal', () => {
             this.form.reset();
             this.hideAlert();
@@ -810,8 +789,13 @@ class DevRoleModal {
     
     async loadRoles() {
         try {
+            console.log('Loading roles...'); // Debug log
+            console.log('Roles list element:', this.rolesList); // Debug log
             const response = await fetch('/dev/roles_manage');
+            console.log('Roles API response status:', response.status); // Debug log
             const roles = await response.json();
+            console.log('Roles loaded:', roles.length); // Debug log
+            console.log('Roles data:', roles); // Debug log
             
             this.rolesList.innerHTML = '';
             roles.forEach(role => {
@@ -908,12 +892,505 @@ class DevRoleModal {
     }
 }
 
+// Development Consumption Management Modal
+class DevConsumptionManagementModal {
+    constructor() {
+        this.modal = document.getElementById('manageConsumptionsModal');
+        this.usersList = document.getElementById('consumptionUsersList');
+        this.searchInput = document.getElementById('consumptionUserSearchInput');
+        this.consumptionsList = document.getElementById('consumptionsList');
+        this.quantityAdjustmentList = document.getElementById('quantityAdjustmentList');
+        // Backdated controls
+        this.backdatedMonth = document.getElementById('backdatedMonth');
+        this.backdatedBeverage = document.getElementById('backdatedBeverage');
+        this.backdatedQuantity = document.getElementById('backdatedQuantity');
+        this.addBackdatedBtn = document.getElementById('addBackdatedBtn');
+        this.consumptionDetailsSection = document.getElementById('consumptionDetailsSection');
+        this.alert = document.getElementById('manageConsumptionsAlert');
+        this.clearAllBtn = document.getElementById('clearAllConsumptionsBtn');
+        this.allUsers = []; // Store all users for filtering
+        this.selectedUserId = null;
+        
+        console.log('DevConsumptionManagementModal elements:', {
+            modal: !!this.modal,
+            usersList: !!this.usersList,
+            searchInput: !!this.searchInput,
+            consumptionsList: !!this.consumptionsList,
+            quantityAdjustmentList: !!this.quantityAdjustmentList,
+            consumptionDetailsSection: !!this.consumptionDetailsSection,
+            alert: !!this.alert,
+            clearAllBtn: !!this.clearAllBtn
+        }); // Debug log
+        
+        // Additional debugging
+        if (!this.modal) {
+            console.error('DevConsumptionManagementModal: Modal element not found!');
+            return;
+        }
+        if (!this.usersList) {
+            console.error('DevConsumptionManagementModal: Users list element not found!');
+        }
+        if (!this.searchInput) {
+            console.error('DevConsumptionManagementModal: Search input element not found!');
+        }
+        if (!this.consumptionsList) {
+            console.error('DevConsumptionManagementModal: Consumptions list element not found!');
+        }
+        if (!this.quantityAdjustmentList) {
+            console.error('DevConsumptionManagementModal: Quantity adjustment list element not found!');
+        }
+        
+        this.init();
+    }
+    
+    init() {
+        this.setupEventListeners();
+        
+        // If modal is already visible (shouldn't happen but as fallback)
+        if (this.modal && this.modal.classList.contains('show')) {
+            console.log('Modal is already visible, loading users immediately...');
+            this.loadUsers();
+        }
+        
+        // Additional fallback: try to load users after a short delay
+        setTimeout(() => {
+            if (this.usersList && this.usersList.children.length === 0) {
+                console.log('Fallback: Loading users after delay because users list is empty');
+                this.loadUsers();
+            }
+        }, 1000);
+    }
+    
+    setupEventListeners() {
+        // Search functionality
+        if (this.searchInput) {
+            this.searchInput.addEventListener('input', (e) => {
+                this.filterUsers(e.target.value);
+            });
+        }
+        
+        this.clearAllBtn.addEventListener('click', () => {
+            if (this.selectedUserId) {
+                this.clearAllConsumptions(this.selectedUserId);
+            }
+        });
+        
+        this.modal.addEventListener('shown.bs.modal', () => {
+            console.log('Manage Consumptions modal opened, loading users...'); // Debug log
+            console.log('Modal element:', this.modal);
+            console.log('Users list element:', this.usersList);
+            console.log('Search input element:', this.searchInput);
+            console.log('About to call loadUsers()...');
+            this.loadUsers();
+            this.loadBeveragesIntoBackdatedSelect();
+            // Pre-fill current month in yyyy-MM format
+            if (this.backdatedMonth && !this.backdatedMonth.value) {
+                const now = new Date();
+                const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+                this.backdatedMonth.value = ym;
+            }
+            if (this.backdatedMonth) {
+                this.backdatedMonth.addEventListener('change', () => {
+                    if (this.selectedUserId) this.loadConsumptions(this.selectedUserId);
+                });
+            }
+        });
+        
+        this.modal.addEventListener('hidden.bs.modal', () => {
+            this.hideAlert();
+            this.selectedUserId = null;
+            this.consumptionDetailsSection.style.display = 'none';
+            this.consumptionsList.innerHTML = '';
+            this.quantityAdjustmentList.innerHTML = '';
+            this.clearAllBtn.disabled = true;
+            if (this.searchInput) {
+                this.searchInput.value = '';
+            }
+            if (this.backdatedQuantity) this.backdatedQuantity.value = 1;
+            if (this.backdatedBeverage) this.backdatedBeverage.innerHTML = '';
+        });
+
+        if (this.addBackdatedBtn) {
+            this.addBackdatedBtn.addEventListener('click', () => this.submitBackdatedAdd());
+        }
+    }
+    
+    async loadUsers() {
+        try {
+            console.log('Loading users for consumption management...'); // Debug log
+            console.log('Users list element:', this.usersList); // Debug log
+            
+            if (!this.usersList) {
+                console.error('Users list element is null!');
+                this.showAlert('Users list element not found', 'danger');
+                return;
+            }
+            
+            const response = await fetch('/dev/users_manage');
+            console.log('API response status:', response.status); // Debug log
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const users = await response.json();
+            console.log('Users loaded for consumption management:', users.length); // Debug log
+            console.log('Users data:', users); // Debug log
+            
+            if (!Array.isArray(users)) {
+                console.error('Users data is not an array:', users);
+                this.showAlert('Invalid users data format', 'danger');
+                return;
+            }
+            
+            this.allUsers = users; // Store all users for filtering
+            this.displayUsers(users);
+            
+            console.log('Users list populated with', users.length, 'users');
+        } catch (error) {
+            console.error('Error loading users:', error);
+            this.showAlert(`Error loading users: ${error.message}`, 'danger');
+        }
+    }
+    
+    displayUsers(users) {
+        console.log('Displaying users:', users.length); // Debug log
+        this.usersList.innerHTML = '';
+        users.forEach(user => {
+            const userItem = document.createElement('div');
+            userItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            userItem.style.cursor = 'pointer';
+            userItem.innerHTML = `
+                <div>
+                    <span class="fw-bold">${user.first_name} ${user.last_name}</span>
+                    <small class="text-muted d-block">
+                        Role: ${user.role_name} | 
+                        Email: ${user.email || 'None'} | 
+                        PIN: ${user.has_pin ? 'Set' : 'Not set'}
+                    </small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-primary btn-sm" onclick="window.devConsumptionManagementModal.selectUser(${user.id}, '${user.first_name} ${user.last_name}')" title="Manage Consumptions">
+                        <i class="fas fa-cog"></i> Manage
+                    </button>
+                </div>
+            `;
+            this.usersList.appendChild(userItem);
+        });
+    }
+    
+    filterUsers(searchTerm) {
+        if (!searchTerm.trim()) {
+            this.displayUsers(this.allUsers);
+            return;
+        }
+        
+        const filtered = this.allUsers.filter(user => {
+            const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
+            const email = (user.email || '').toLowerCase();
+            const role = user.role_name.toLowerCase();
+            const search = searchTerm.toLowerCase();
+            
+            return fullName.includes(search) || 
+                   email.includes(search) || 
+                   role.includes(search);
+        });
+        
+        this.displayUsers(filtered);
+    }
+    
+    selectUser(userId, userName) {
+        console.log('User selected:', userName, 'ID:', userId);
+        this.selectedUserId = userId;
+        this.consumptionDetailsSection.style.display = 'block';
+        this.clearAllBtn.disabled = false;
+        this.loadConsumptions(userId);
+    }
+    
+    async loadConsumptions(userId) {
+        try {
+            console.log('Loading consumptions for user:', userId); // Debug log
+            let url = `/dev/consumptions_manage?user_id=${userId}`;
+            if (this.backdatedMonth && this.backdatedMonth.value) {
+                const [y, m] = this.backdatedMonth.value.split('-').map(v=>parseInt(v,10));
+                if (y && m) url += `&year=${y}&month=${m}`;
+            }
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.success) {
+                this.displayConsumptions(data.consumptions, data.period);
+            } else {
+                this.showAlert(data.error || 'Failed to load consumptions', 'danger');
+            }
+        } catch (error) {
+            console.error('Error loading consumptions:', error);
+            this.showAlert('Error loading consumptions', 'danger');
+        }
+    }
+    
+    displayConsumptions(consumptions, period) {
+        this.consumptionsList.innerHTML = '';
+        this.quantityAdjustmentList.innerHTML = '';
+        
+        if (consumptions.length === 0) {
+            const monthText = period ? `${String(period.month).padStart(2,'0')}.${period.year}` : 'current month';
+            this.consumptionsList.innerHTML = `<div class=\"list-group-item text-muted\">No consumptions found for ${monthText}</div>`;
+            this.quantityAdjustmentList.innerHTML = '<div class="list-group-item text-muted">No consumptions to adjust</div>';
+            return;
+        }
+        
+        // Display consumption summary
+        consumptions.forEach(beverage => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item d-flex justify-content-between align-items-center';
+            item.innerHTML = `
+                <div>
+                    <span class="fw-bold">${beverage.beverage_name}</span>
+                    <small class="text-muted d-block">${beverage.category} | Total: ${beverage.total_quantity}</small>
+                </div>
+                <button class="btn btn-outline-danger btn-sm" onclick="devConsumptionManagementModal.clearBeverageConsumptions(${beverage.beverage_id}, '${beverage.beverage_name}')" title="Clear all consumptions for this beverage">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            this.consumptionsList.appendChild(item);
+        });
+        
+        // Display quantity adjustment controls
+        consumptions.forEach(beverage => {
+            const adjustmentItem = document.createElement('div');
+            adjustmentItem.className = 'list-group-item';
+            adjustmentItem.innerHTML = `
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <span class="fw-bold">${beverage.beverage_name}</span>
+                        <small class="text-muted d-block">${beverage.category}</small>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="devConsumptionManagementModal.decreaseQuantity(${beverage.beverage_id})">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="text" class="form-control form-control-sm text-center" id="quantity_${beverage.beverage_id}" value="${beverage.total_quantity}" readonly style="background-color: #f8f9fa;">
+                            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="devConsumptionManagementModal.increaseQuantity(${beverage.beverage_id})">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-primary btn-sm" onclick="devConsumptionManagementModal.saveQuantityAdjustment(${beverage.beverage_id})">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+            `;
+            this.quantityAdjustmentList.appendChild(adjustmentItem);
+        });
+    }
+
+    async loadBeveragesIntoBackdatedSelect() {
+        if (!this.backdatedBeverage) return;
+        try {
+            const resp = await fetch('/dev/beverages?all=1');
+            if (!resp.ok) return;
+            const items = await resp.json();
+            // drinks only for now; can include food if desired
+            const drinks = items.filter(b => b.status && b.category === 'drink');
+            this.backdatedBeverage.innerHTML = '';
+            drinks.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.name;
+                this.backdatedBeverage.appendChild(opt);
+            });
+        } catch (e) {
+            console.error('Failed to load beverages for backdated select', e);
+        }
+    }
+
+    async submitBackdatedAdd() {
+        if (!this.selectedUserId) {
+            this.showAlert('Select a user first', 'warning');
+            return;
+        }
+        if (!this.backdatedMonth || !this.backdatedBeverage || !this.backdatedQuantity) return;
+        const ym = this.backdatedMonth.value; // format yyyy-MM
+        const [yearStr, monthStr] = (ym || '').split('-');
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10);
+        const beverageId = parseInt(this.backdatedBeverage.value, 10);
+        const quantity = parseInt(this.backdatedQuantity.value, 10) || 1;
+
+        if (!year || !month || !beverageId || quantity <= 0) {
+            this.showAlert('Please provide month, beverage, and a positive quantity.', 'danger');
+            return;
+        }
+        try {
+            const resp = await fetch('/dev/consumptions_manage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: this.selectedUserId,
+                    action: 'add_backdated',
+                    beverage_id: beverageId,
+                    quantity: quantity,
+                    year: year,
+                    month: month
+                })
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.success) {
+                throw new Error(data.error || 'Request failed');
+            }
+            this.showAlert(data.message || 'Backdated consumption added', 'success');
+        } catch (e) {
+            console.error('Backdated add failed', e);
+            this.showAlert(`Failed to add backdated consumption: ${e.message}`, 'danger');
+        }
+    }
+    
+    async clearBeverageConsumptions(beverageId, beverageName) {
+        const userId = this.selectedUserId;
+        if (!userId) return;
+        
+        if (!confirm(`Are you sure you want to clear ALL consumptions for "${beverageName}" for this user?`)) {
+            return;
+        }
+        
+        try {
+            const payload = { user_id: userId, action: 'clear_beverage', beverage_id: beverageId };
+            if (this.backdatedMonth && this.backdatedMonth.value) {
+                const [y, m] = this.backdatedMonth.value.split('-').map(v=>parseInt(v,10));
+                if (y && m) { payload.year = y; payload.month = m; }
+            }
+            const response = await fetch('/dev/consumptions_manage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                this.showAlert(data.message, 'success');
+                this.loadConsumptions(this.selectedUserId); // Reload consumptions
+            } else {
+                this.showAlert(data.error || 'Failed to clear consumptions', 'danger');
+            }
+        } catch (error) {
+            console.error('Error clearing beverage consumptions:', error);
+            this.showAlert('Error clearing consumptions', 'danger');
+        }
+    }
+    
+    async clearAllConsumptions(userId) {
+        if (!confirm('Are you sure you want to clear ALL consumptions for this user for the current month? This action cannot be undone!')) {
+            return;
+        }
+        
+        try {
+            const body = { user_id: userId, action: 'clear_all' };
+            if (this.backdatedMonth && this.backdatedMonth.value) {
+                const [y, m] = this.backdatedMonth.value.split('-').map(v=>parseInt(v,10));
+                if (y && m) { body.year = y; body.month = m; }
+            }
+            const response = await fetch('/dev/consumptions_manage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                this.showAlert(data.message, 'success');
+                this.loadConsumptions(this.selectedUserId); // Reload consumptions
+            } else {
+                this.showAlert(data.error || 'Failed to clear consumptions', 'danger');
+            }
+        } catch (error) {
+            console.error('Error clearing all consumptions:', error);
+            this.showAlert('Error clearing consumptions', 'danger');
+        }
+    }
+    
+    increaseQuantity(beverageId) {
+        const input = document.getElementById(`quantity_${beverageId}`);
+        if (input) {
+            const currentValue = parseInt(input.value) || 0;
+            input.value = currentValue + 1;
+        }
+    }
+    
+    decreaseQuantity(beverageId) {
+        const input = document.getElementById(`quantity_${beverageId}`);
+        if (input) {
+            const currentValue = parseInt(input.value) || 0;
+            input.value = Math.max(0, currentValue - 1); // Prevent negative values
+        }
+    }
+    
+    async saveQuantityAdjustment(beverageId) {
+        if (!this.selectedUserId) return;
+        
+        const input = document.getElementById(`quantity_${beverageId}`);
+        if (!input) return;
+        
+        const newQuantity = parseInt(input.value);
+        if (isNaN(newQuantity) || newQuantity < 0) {
+            this.showAlert('Invalid quantity', 'danger');
+            return;
+        }
+        
+        try {
+            const payload = { user_id: this.selectedUserId, action: 'adjust_quantity', beverage_id: beverageId, new_quantity: newQuantity };
+            if (this.backdatedMonth && this.backdatedMonth.value) {
+                const [y, m] = this.backdatedMonth.value.split('-').map(v=>parseInt(v,10));
+                if (y && m) { payload.year = y; payload.month = m; }
+            }
+            const response = await fetch('/dev/consumptions_manage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                this.showAlert(data.message, 'success');
+                this.loadConsumptions(userId); // Reload consumptions
+            } else {
+                this.showAlert(data.error || 'Failed to adjust quantity', 'danger');
+            }
+        } catch (error) {
+            console.error('Error adjusting quantity:', error);
+            this.showAlert('Error adjusting quantity', 'danger');
+        }
+    }
+    
+    showAlert(message, type) {
+        this.alert.className = `alert alert-${type}`;
+        this.alert.textContent = message;
+        this.alert.style.display = 'block';
+    }
+    
+    hideAlert() {
+        this.alert.style.display = 'none';
+    }
+}
+
 // Development User Management Modal
 class DevUserManagementModal {
     constructor() {
         this.modal = document.getElementById('manageUsersModal');
         this.usersList = document.getElementById('usersList');
         this.alert = document.getElementById('manageUsersAlert');
+        this.searchInput = document.getElementById('userSearchInput');
+        this.allUsers = []; // Store all users for filtering
+        
+        console.log('DevUserManagementModal elements:', {
+            modal: !!this.modal,
+            usersList: !!this.usersList,
+            alert: !!this.alert,
+            searchInput: !!this.searchInput
+        }); // Debug log
         
         if (!this.modal) return;
         
@@ -925,47 +1402,177 @@ class DevUserManagementModal {
     }
     
     setupEventListeners() {
+        // Search functionality
+        if (this.searchInput) {
+            this.searchInput.addEventListener('input', (e) => {
+                this.filterUsers(e.target.value);
+            });
+        }
+        
         this.modal.addEventListener('shown.bs.modal', () => {
+            console.log('Manage Users modal opened, loading users...'); // Debug log
+            console.log('Modal element:', this.modal);
+            console.log('Users list element:', this.usersList);
             this.loadUsers();
         });
         
         this.modal.addEventListener('hidden.bs.modal', () => {
             this.hideAlert();
+            if (this.searchInput) {
+                this.searchInput.value = '';
+            }
         });
     }
     
     async loadUsers() {
         try {
+            console.log('Loading users...'); // Debug log
+            console.log('Users list element:', this.usersList); // Debug log
             const response = await fetch('/dev/users_manage');
+            console.log('API response status:', response.status); // Debug log
             const users = await response.json();
+            console.log('Users loaded:', users.length); // Debug log
+            console.log('Users data:', users); // Debug log
             
-            this.usersList.innerHTML = '';
-            users.forEach(user => {
-                const userItem = document.createElement('div');
-                userItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-                const pinBtn = user.has_pin ? `<button class="btn btn-outline-warning btn-sm me-2" onclick="devUserManagementModal.deletePin(${user.id}, '${user.first_name} ${user.last_name}')" title="Delete PIN"><i class='fas fa-key'></i></button>` : '';
-                userItem.innerHTML = `
-                    <div>
-                        <span class="fw-bold">${user.first_name} ${user.last_name}</span>
-                        <small class="text-muted d-block">
-                            Role: ${user.role_name} | 
-                            Email: ${user.email || 'None'} | 
-                            PIN: ${user.has_pin ? 'Set' : 'Not set'}
-                        </small>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        ${pinBtn}
-                        <button class="btn btn-outline-danger btn-sm" onclick="devUserManagementModal.deleteUser(${user.id}, '${user.first_name} ${user.last_name}')" title="Delete User">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                this.usersList.appendChild(userItem);
-            });
+            this.allUsers = users; // Store all users for filtering
+            this.displayUsers(users);
         } catch (error) {
             console.error('Failed to load users:', error);
             this.showAlert('Failed to load users', 'danger');
         }
+    }
+    
+    displayUsers(users) {
+        console.log('Displaying users:', users.length); // Debug log
+        console.log('Users list element:', this.usersList); // Debug log
+        this.usersList.innerHTML = '';
+        users.forEach(user => {
+            const userItem = document.createElement('div');
+            userItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            const pinControls = user.has_pin
+              ? `<button class="btn btn-outline-warning btn-sm me-2" onclick="devUserManagementModal.deletePin(${user.id}, '${user.first_name} ${user.last_name}')" title="Delete PIN"><i class='fas fa-key'></i> Remove PIN</button>`
+              : `<div class="input-group input-group-sm pin-set-group me-2">
+                   <input type="password" class="form-control" placeholder="Set 4-digit PIN" maxlength="4" pattern="\\d{4}" id="pinInput_${user.id}">
+                   <button class="btn btn-outline-secondary" onclick="devUserManagementModal.setPin(${user.id})" title="Set PIN"><i class='fas fa-key'></i></button>
+                 </div>`;
+            userItem.innerHTML = `
+                <div class="flex-fill">
+                    <div class="manage-user-row row g-2 align-items-center">
+                        <div class="col-md-3 col-12 name-field">
+                            <input type="text" class="form-control form-control-sm" value="${user.first_name}" id="first_${user.id}" placeholder="First name">
+                        </div>
+                        <div class="col-md-3 col-12 name-field">
+                            <input type="text" class="form-control form-control-sm" value="${user.last_name}" id="last_${user.id}" placeholder="Last name">
+                        </div>
+                        <div class="col-md-3 col-12 role-select">
+                            <select class="form-select form-select-sm" id="role_${user.id}"><option>Loading roles...</option></select>
+                        </div>
+                        <div class="col-md-3 col-12 d-flex justify-content-end actions">
+                            <div class="pin-controls">${pinControls}</div>
+                            <button class="btn btn-primary btn-sm" onclick="devUserManagementModal.saveUser(${user.id})" title="Save">
+                                <i class="fas fa-save"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm ms-2" onclick="devUserManagementModal.deleteUser(${user.id}, '${user.first_name} ${user.last_name}')" title="Delete User">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="col-12 meta"><small class="text-muted">Email: ${user.email || 'None'} | PIN: ${user.has_pin ? 'Set' : 'Not set'}</small></div>
+                    </div>
+                </div>
+            `;
+            this.usersList.appendChild(userItem);
+            // Populate roles select
+            this.populateRolesSelect(`role_${user.id}`, user.role_name);
+        });
+    }
+
+    async populateRolesSelect(selectId, currentRoleName){
+        try{
+            const resp = await fetch('/dev/roles');
+            const roles = await resp.json();
+            const sel = document.getElementById(selectId);
+            if(!sel) return;
+            sel.innerHTML = '';
+            roles.forEach(r=>{
+                const opt = document.createElement('option');
+                opt.value = r.id;
+                opt.textContent = r.name;
+                if(r.name === currentRoleName) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        } catch(e){
+            console.error('Failed to load roles', e);
+        }
+    }
+
+    async saveUser(userId){
+        const first = document.getElementById(`first_${userId}`)?.value.trim();
+        const last = document.getElementById(`last_${userId}`)?.value.trim();
+        const roleId = document.getElementById(`role_${userId}`)?.value;
+        if(!first || !last || !roleId){
+            this.showAlert('First, last and role are required', 'danger');
+            return;
+        }
+        try{
+            const res = await fetch(`/dev/update_user/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ first_name: first, last_name: last, role_id: parseInt(roleId,10) })
+            });
+            const data = await res.json();
+            if(res.ok && data.success){
+                this.showAlert('User updated successfully', 'success');
+                this.loadUsers();
+            } else {
+                this.showAlert(data.error || 'Failed to update user', 'danger');
+            }
+        } catch(e){
+            console.error('Failed to update user', e);
+            this.showAlert('Network error updating user', 'danger');
+        }
+    }
+
+    async setPin(userId){
+        const input = document.getElementById(`pinInput_${userId}`);
+        if(!input) return;
+        const pin = (input.value || '').trim();
+        if(!/^\d{4}$/.test(pin)){
+            this.showAlert('PIN must be exactly 4 digits', 'danger');
+            return;
+        }
+        try{
+            const res = await fetch(`/dev/set_pin/${userId}`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ pin }) });
+            const data = await res.json();
+            if(res.ok && data.success){
+                this.showAlert(data.message || 'PIN set', 'success');
+                this.loadUsers();
+            } else {
+                this.showAlert(data.error || 'Failed to set PIN', 'danger');
+            }
+        } catch(e){
+            console.error('Failed to set PIN', e);
+            this.showAlert('Network error setting PIN', 'danger');
+        }
+    }
+    
+    filterUsers(searchTerm) {
+        if (!searchTerm.trim()) {
+            this.displayUsers(this.allUsers);
+            return;
+        }
+        
+        const filtered = this.allUsers.filter(user => {
+            const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
+            const email = (user.email || '').toLowerCase();
+            const role = user.role_name.toLowerCase();
+            const search = searchTerm.toLowerCase();
+            
+            return fullName.includes(search) || 
+                   email.includes(search) || 
+                   role.includes(search);
+        });
+        
+        this.displayUsers(filtered);
     }
 
     async deletePin(userId, userName){
@@ -1049,8 +1656,13 @@ class DevItemModal {
     
     async loadItems() {
         try {
+            console.log('Loading items for DevItemModal...'); // Debug log
+            console.log('Items list element:', this.itemsList); // Debug log
             const response = await fetch('/dev/beverages');
+            console.log('Items API response status:', response.status); // Debug log
             const items = await response.json();
+            console.log('Items loaded:', items.length); // Debug log
+            console.log('Items data:', items); // Debug log
             
             this.itemsList.innerHTML = '';
             items.forEach(item => {
@@ -1259,16 +1871,29 @@ document.addEventListener('DOMContentLoaded', function() {
     new GuestsButton();
     new DevUserModal();
     new DevBeverageModal();
-    new DevPriceModal();
-    new DevRoleModal();
-    new DevUserManagementModal();
-    new DevItemModal();
     new DevDeleteModal();
     
     // Make modals globally accessible for onclick handlers
+    console.log('Initializing admin modals...');
     window.devRoleModal = new DevRoleModal();
+    console.log('DevRoleModal initialized:', !!window.devRoleModal);
     window.devUserManagementModal = new DevUserManagementModal();
+    console.log('DevUserManagementModal initialized:', !!window.devUserManagementModal);
     window.devItemModal = new DevItemModal();
+    console.log('DevItemModal initialized:', !!window.devItemModal);
     window.devPriceModal = new DevPriceModal();
+    console.log('DevPriceModal initialized:', !!window.devPriceModal);
+    window.devConsumptionManagementModal = new DevConsumptionManagementModal();
+    console.log('DevConsumptionManagementModal initialized:', !!window.devConsumptionManagementModal);
+    console.log('All admin modals initialized successfully');
+    
+    // Check if modals are working
+    console.log('Modal check:');
+    console.log('- devRoleModal:', !!window.devRoleModal);
+    console.log('- devUserManagementModal:', !!window.devUserManagementModal);
+    console.log('- devItemModal:', !!window.devItemModal);
+    console.log('- devPriceModal:', !!window.devPriceModal);
+    console.log('- devConsumptionManagementModal:', !!window.devConsumptionManagementModal);
+    
 });
 

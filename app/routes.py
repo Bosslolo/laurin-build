@@ -41,9 +41,11 @@ def require_admin_session(f):
     decorated_function.__name__ = f.__name__
     return decorated_function
 
-def check_invoice_exists(user_id):
-    """Get or create an invoice for the user and current month."""
-    current_month_year = date.today().replace(day=1)
+def check_invoice_exists(user_id, period: date | None = None):
+    """Get or create an invoice for the user and target month.
+    If period is None, defaults to current month.
+    """
+    current_month_year = (period or date.today()).replace(day=1)
     existing_invoice = invoices.query.filter_by(
         user_id=user_id,
         period=current_month_year
@@ -52,9 +54,17 @@ def check_invoice_exists(user_id):
     if existing_invoice:
         return existing_invoice
 
-    user = users.query.get(user_id)
-    if not user:
-        raise ValueError(f"User with ID {user_id} not found")
+    # Handle guest users (user_id = 0)
+    if user_id == 0:
+        user = type('GuestUser', (), {
+            'id': 0,
+            'first_name': 'Guest',
+            'last_name': ''
+        })()
+    else:
+        user = users.query.get(user_id)
+        if not user:
+            raise ValueError(f"User with ID {user_id} not found")
     
     count = invoices.query.filter_by(period=current_month_year).count()
     invoice_name = f"INV-{current_month_year.strftime('%Y-%m')}_{count + 1}"
@@ -84,6 +94,45 @@ def check_invoice_exists(user_id):
     except Exception as e:
         db.session.rollback()
         raise Exception(f"Failed to create invoice: {str(e)}")
+
+def get_or_create_guest_user():
+    """Return a persistent synthetic 'Guests' user under role 'Guests' (id 4 if present).
+    Identified by sentinel itsl_id = -1 to avoid colliding with real users.
+    """
+    # Resolve Guests role id (prefer id 4, fallback to name lookup)
+    guests_role_id = 4
+    role_obj = roles.query.get(guests_role_id)
+    if not role_obj:
+        role_obj = roles.query.filter(roles.name.ilike('guests')).first()
+        if role_obj:
+            guests_role_id = role_obj.id
+
+    # Try by sentinel itsl_id
+    guest_user = users.query.filter_by(itsl_id=-1).first()
+    if guest_user:
+        return guest_user
+
+    # Fallback try by role/name combo to prevent duplicates if existed before
+    guest_user = users.query.filter_by(role_id=guests_role_id, first_name='Guests', last_name='').first()
+    if guest_user:
+        # ensure sentinel set for future lookups
+        if guest_user.itsl_id is None:
+            guest_user.itsl_id = -1
+            db.session.commit()
+        return guest_user
+
+    # Create
+    guest_user = users(
+        itsl_id=-1,
+        role_id=guests_role_id,
+        first_name='Guests',
+        last_name='',
+        email=None,
+        status=True
+    )
+    db.session.add(guest_user)
+    db.session.commit()
+    return guest_user
 
 def hash_pin(pin):
     """Hash a PIN using SHA-256"""
@@ -633,6 +682,57 @@ def dev_delete_pin(user_id):
         db.session.rollback()
         return jsonify({'success': False, 'error': f'Failed to delete PIN: {str(e)}'}), 500
 
+@bp.route('/dev/set_pin/<int:user_id>', methods=['POST'])
+def dev_set_pin(user_id):
+    """Development-only: set or replace a user's PIN."""
+    if not (os.getenv('FLASK_ENV') == 'development' or os.getenv('FLASK_APP_MODE') == 'admin'):
+        abort(404)
+    try:
+        data = request.get_json() or {}
+        pin = (data.get('pin') or '').strip()
+        if not pin or not pin.isdigit() or len(pin) != 4:
+            return jsonify({'success': False, 'error': 'PIN must be exactly 4 digits'}), 400
+        user = users.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        user.pin_hash = hash_pin(pin)
+        db.session.commit()
+        return jsonify({'success': True, 'message': f"PIN set for {user.first_name} {user.last_name}"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Failed to set PIN: {str(e)}'}), 500
+
+@bp.route('/dev/update_user/<int:user_id>', methods=['POST'])
+def dev_update_user(user_id):
+    """Development-only: update user's first/last name and role."""
+    if not (os.getenv('FLASK_ENV') == 'development' or os.getenv('FLASK_APP_MODE') == 'admin'):
+        abort(404)
+    try:
+        data = request.get_json() or {}
+        first_name = (data.get('first_name') or '').strip()
+        last_name = (data.get('last_name') or '').strip()
+        role_id = data.get('role_id')
+        if not first_name or not last_name or role_id is None:
+            return jsonify({'success': False, 'error': 'first_name, last_name and role_id are required'}), 400
+        try:
+            role_id = int(role_id)
+        except (TypeError, ValueError):
+            return jsonify({'success': False, 'error': 'Invalid role_id'}), 400
+        user = users.query.get(user_id)
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        role = roles.query.get(role_id)
+        if not role:
+            return jsonify({'success': False, 'error': 'Role not found'}), 404
+        user.first_name = first_name
+        user.last_name = last_name
+        user.role_id = role_id
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'User updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Failed to update user: {str(e)}'}), 500
+
 @bp.route("/dev/users_manage", methods=["GET"])
 def dev_users_manage():
     """Development-only user management - get all users."""
@@ -779,24 +879,14 @@ def dev_delete_data():
 
 @bp.route("/guests")
 def guests():
-    """Guest entry page - allows beverage selection without a specific user."""
-    # Create a temporary guest user object for the template
-    guest_user = type('GuestUser', (), {
-        'id': 0,
-        'first_name': 'Guest',
-        'last_name': '',
-        'email': '',
-        'role': type('GuestRole', (), {
-            'id': 1,  # Default to role ID 1 (should be "Guests" role)
-            'name': 'Guests'
-        })()
-    })()
+    """Guest entry page - uses a persistent 'Guests' user (role Guests)."""
+    guest_user = get_or_create_guest_user()
     
     # Fetch all active beverages
     all_beverages = beverages.query.filter_by(status=True).all()
     
-    # Fetch beverage prices for the guest role (role_id = 1)
-    beverage_prices_for_role = beverage_prices.query.filter_by(role_id=1).all()
+    # Fetch beverage prices for the guest role
+    beverage_prices_for_role = beverage_prices.query.filter_by(role_id=guest_user.role_id).all()
     
     # Create a dictionary for easy price lookup
     price_lookup = {bp.beverage_id: bp for bp in beverage_prices_for_role}
@@ -808,8 +898,8 @@ def guests():
         'last_name': guest_user.last_name,
         'email': guest_user.email,
         'role': {
-            'id': guest_user.role.id,
-            'name': guest_user.role.name
+            'id': guest_user.role_id,
+            'name': 'Guests'
         }
     }
     
@@ -1032,19 +1122,40 @@ def add_consumption():
             return jsonify({"error": "No JSON data provided"}), 400
             
         try:
-            user_id = int(data.get('user_id'))
-            beverage_id = int(data.get('beverage_id'))
-            quantity = int(data.get('quantity', 1))
+            user_id_raw = data.get('user_id')
+            beverage_id_raw = data.get('beverage_id')
+            quantity_raw = data.get('quantity', 1)
+            
+            if user_id_raw is None or beverage_id_raw is None:
+                return jsonify({"error": "Missing required fields: user_id and beverage_id are required"}), 400
+                
+            user_id = int(user_id_raw)
+            beverage_id = int(beverage_id_raw)
+            quantity = int(quantity_raw)
         except (ValueError, TypeError) as e:
             return jsonify({"error": f"Invalid data format: {str(e)}"}), 400
         
-        if not user_id or not beverage_id:
+        # Validate required identifiers
+        # Note: user_id can be 0 for guest users; do not treat 0 as missing
+        if beverage_id is None:
             return jsonify({"error": "Missing required fields"}), 400
+        if beverage_id <= 0:
+            return jsonify({"error": "Invalid beverage_id"}), 400
         
-        # Validate user exists
-        user = users.query.get(user_id)
-        if not user:
-            return jsonify({"error": "User not found"}), 404
+        # Handle guest users (user_id = 0)
+        if user_id == 0:
+            # Create a temporary guest user object
+            user = type('GuestUser', (), {
+                'id': 0,
+                'role_id': 1,  # Default to role ID 1 (Guests role)
+                'first_name': 'Guest',
+                'last_name': ''
+            })()
+        else:
+            # Validate regular user exists
+            user = users.query.get(user_id)
+            if not user:
+                return jsonify({"error": "User not found"}), 404
         
         # Validate beverage exists and is active
         beverage = beverages.query.filter_by(id=beverage_id, status=True).first()
@@ -1060,15 +1171,17 @@ def add_consumption():
         if not beverage_price:
             return jsonify({"error": "No price found for this beverage and role"}), 404
         
-        # Get or create monthly invoice
-        invoice = check_invoice_exists(user_id)
+        # Get or create monthly invoice (skip for guest users with id 0)
+        invoice = None
+        if user_id != 0:
+            invoice = check_invoice_exists(user_id)
         
         # Create consumption entry
         consumption = consumptions(
             user_id=user_id,
             beverage_id=beverage_id,
             beverage_price_id=beverage_price.id,
-            invoice_id=invoice.id,
+            invoice_id=(invoice.id if invoice else None),
             quantity=quantity,
             unit_price_cents=beverage_price.price_cents
         )
@@ -1089,6 +1202,254 @@ def add_consumption():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Failed to add consumption: {str(e)}"}), 500
+
+@bp.route("/dev/consumptions_manage", methods=["GET", "POST"])
+def dev_consumptions_manage():
+    """Development-only consumption management."""
+    if not (os.getenv('FLASK_ENV') == 'development' or os.getenv('FLASK_APP_MODE') == 'admin'):
+        abort(404)
+    
+    if request.method == "POST":
+        data = request.get_json()
+        user_id = data.get('user_id')
+        action = data.get('action')
+        year = data.get('year')
+        month = data.get('month')
+        
+        if not user_id:
+            return jsonify({"success": False, "error": "User ID is required"}), 400
+        
+        try:
+            if action == 'clear_all':
+                # Clear all consumptions for the user in selected month (or current month if not provided)
+                if year and month:
+                    target_start = date(int(year), int(month), 1)
+                    target_end = date(int(year) + (1 if int(month) == 12 else 0), (1 if int(month) == 12 else int(month)+1), 1)
+                else:
+                    target_start = date.today().replace(day=1)
+                    target_end = (target_start.replace(month=1, year=target_start.year+1) if target_start.month == 12 else target_start.replace(month=target_start.month+1))
+                consumptions.query.filter(
+                    consumptions.user_id == user_id,
+                    consumptions.created_at >= target_start,
+                    consumptions.created_at < target_end
+                ).delete()
+                db.session.commit()
+                return jsonify({"success": True, "message": "All consumptions cleared for selected month"})
+            elif action == 'clear_beverage':
+                beverage_id = data.get('beverage_id')
+                if not beverage_id:
+                    return jsonify({"success": False, "error": "Beverage ID is required"}), 400
+                
+                # Clear all consumptions for specific beverage and user in selected month (or current)
+                if year and month:
+                    target_start = date(int(year), int(month), 1)
+                    target_end = date(int(year) + (1 if int(month) == 12 else 0), (1 if int(month) == 12 else int(month)+1), 1)
+                else:
+                    target_start = date.today().replace(day=1)
+                    target_end = (target_start.replace(month=1, year=target_start.year+1) if target_start.month == 12 else target_start.replace(month=target_start.month+1))
+                consumptions.query.filter(
+                    consumptions.user_id == user_id,
+                    consumptions.beverage_id == beverage_id,
+                    consumptions.created_at >= target_start,
+                    consumptions.created_at < target_end
+                ).delete()
+                db.session.commit()
+                return jsonify({"success": True, "message": f"All consumptions for beverage {beverage_id} cleared for selected month"})
+            elif action == 'adjust_quantity':
+                beverage_id = data.get('beverage_id')
+                new_quantity = data.get('new_quantity')
+                
+                if not beverage_id or new_quantity is None:
+                    return jsonify({"success": False, "error": "Beverage ID and new quantity are required"}), 400
+                
+                try:
+                    new_quantity = int(new_quantity)
+                    if new_quantity < 0:
+                        return jsonify({"success": False, "error": "Quantity cannot be negative"}), 400
+                except (ValueError, TypeError):
+                    return jsonify({"success": False, "error": "Invalid quantity format"}), 400
+                
+                # Get current total quantity for the beverage within selected month
+                if year and month:
+                    target_start = date(int(year), int(month), 1)
+                    target_end = date(int(year) + (1 if int(month) == 12 else 0), (1 if int(month) == 12 else int(month)+1), 1)
+                else:
+                    target_start = date.today().replace(day=1)
+                    target_end = (target_start.replace(month=1, year=target_start.year+1) if target_start.month == 12 else target_start.replace(month=target_start.month+1))
+                current_consumptions = consumptions.query.filter(
+                    consumptions.user_id == user_id,
+                    consumptions.beverage_id == beverage_id,
+                    consumptions.created_at >= target_start,
+                    consumptions.created_at < target_end
+                ).all()
+                
+                current_total = sum(c.quantity for c in current_consumptions)
+                
+                if new_quantity == current_total:
+                    return jsonify({"success": True, "message": "Quantity unchanged"})
+                
+                # Clear existing consumptions
+                for cons in current_consumptions:
+                    db.session.delete(cons)
+                
+                # Add new consumption with adjusted quantity
+                if new_quantity > 0:
+                    # Get beverage price for user's role
+                    user = users.query.get(user_id)
+                    beverage_price = beverage_prices.query.filter_by(
+                        role_id=user.role_id,
+                        beverage_id=beverage_id
+                    ).first()
+                    
+                    if not beverage_price:
+                        return jsonify({"success": False, "error": "No price found for this beverage and role"}), 404
+                    
+                    # Get or create invoice for the selected month
+                    invoice = check_invoice_exists(user_id, period=target_start)
+                    
+                    # Create new consumption with adjusted quantity
+                    new_consumption = consumptions(
+                        user_id=user_id,
+                        beverage_id=beverage_id,
+                        beverage_price_id=beverage_price.id,
+                        invoice_id=invoice.id,
+                        quantity=new_quantity,
+                        unit_price_cents=beverage_price.price_cents
+                    )
+                    db.session.add(new_consumption)
+                
+                db.session.commit()
+                return jsonify({"success": True, "message": f"Quantity adjusted to {new_quantity}"})
+            elif action == 'add_backdated':
+                # Admin-only: add consumptions for a specific month
+                beverage_id = data.get('beverage_id')
+                quantity = data.get('quantity')
+                year = data.get('year')
+                month = data.get('month')
+
+                if not all([beverage_id, quantity, year, month]):
+                    return jsonify({"success": False, "error": "beverage_id, quantity, year and month are required"}), 400
+
+                try:
+                    beverage_id = int(beverage_id)
+                    quantity = int(quantity)
+                    year = int(year)
+                    month = int(month)
+                    if quantity <= 0:
+                        return jsonify({"success": False, "error": "Quantity must be positive"}), 400
+                    # Clamp to 1..12
+                    if month < 1 or month > 12:
+                        return jsonify({"success": False, "error": "Invalid month"}), 400
+                except (TypeError, ValueError):
+                    return jsonify({"success": False, "error": "Invalid numeric values"}), 400
+
+                try:
+                    # Validate user and beverage
+                    user = users.query.get(user_id)
+                    if not user:
+                        return jsonify({"success": False, "error": "User not found"}), 404
+                    beverage = beverages.query.filter_by(id=beverage_id, status=True).first()
+                    if not beverage:
+                        return jsonify({"success": False, "error": "Beverage not found or inactive"}), 404
+
+                    # Price for user's role
+                    price_row = beverage_prices.query.filter_by(role_id=user.role_id, beverage_id=beverage_id).first()
+                    if not price_row:
+                        return jsonify({"success": False, "error": "No price found for this beverage and role"}), 404
+
+                    # Target period (first day of selected month)
+                    target_period = date(year, month, 1)
+
+                    # Get or create invoice for that month
+                    invoice = check_invoice_exists(user_id, period=target_period)
+
+                    # Choose a created_at inside that month (use first day at noon)
+                    created_at_dt = datetime(year, month, 1, 12, 0, 0)
+
+                    # Create consumption row with given quantity
+                    new_cons = consumptions(
+                        user_id=user_id,
+                        beverage_id=beverage_id,
+                        beverage_price_id=price_row.id,
+                        invoice_id=invoice.id,
+                        quantity=quantity,
+                        unit_price_cents=price_row.price_cents,
+                        created_at=created_at_dt
+                    )
+                    db.session.add(new_cons)
+                    db.session.commit()
+                    return jsonify({"success": True, "message": f"Added {quantity} consumption(s) to {target_period.strftime('%Y-%m')}"})
+                except Exception as e:
+                    db.session.rollback()
+                    return jsonify({"success": False, "error": f"Failed to add backdated consumption: {str(e)}"}), 500
+            elif action == 'delete_consumption':
+                cons_id = data.get('consumption_id')
+                if not cons_id:
+                    return jsonify({"success": False, "error": "consumption_id is required"}), 400
+                row = consumptions.query.filter_by(id=cons_id, user_id=user_id).first()
+                if not row:
+                    return jsonify({"success": False, "error": "Consumption not found"}), 404
+                db.session.delete(row)
+                db.session.commit()
+                return jsonify({"success": True, "message": "Consumption deleted"})
+            else:
+                return jsonify({"success": False, "error": "Invalid action"}), 400
+                
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"success": False, "error": f"Failed to clear consumptions: {str(e)}"}), 500
+    
+    # GET: Return consumptions for a specific user (optionally for a given month)
+    user_id = request.args.get('user_id', type=int)
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+    if not user_id:
+        return jsonify({"success": False, "error": "User ID is required"}), 400
+    
+    try:
+        if year and month:
+            target_start = date(year, month, 1)
+            target_end = date(year + (1 if month == 12 else 0), (1 if month == 12 else month+1), 1)
+        else:
+            target_start = date.today().replace(day=1)
+            target_end = (target_start.replace(month=1, year=target_start.year+1) if target_start.month == 12 else target_start.replace(month=target_start.month+1))
+        user_consumptions = db.session.query(
+            consumptions,
+            beverages.name.label('beverage_name'),
+            beverages.category
+        ).join(beverages, consumptions.beverage_id == beverages.id) \
+         .filter(
+             consumptions.user_id == user_id,
+             consumptions.created_at >= target_start,
+             consumptions.created_at < target_end
+         ).order_by(consumptions.created_at.desc()).all()
+        
+        # Group by beverage
+        beverage_totals = {}
+        for cons, beverage_name, category in user_consumptions:
+            if beverage_name not in beverage_totals:
+                beverage_totals[beverage_name] = {
+                    'beverage_id': cons.beverage_id,
+                    'beverage_name': beverage_name,
+                    'category': category,
+                    'total_quantity': 0,
+                    'consumptions': []
+                }
+            beverage_totals[beverage_name]['total_quantity'] += cons.quantity
+            beverage_totals[beverage_name]['consumptions'].append({
+                'id': cons.id,
+                'quantity': cons.quantity,
+                'created_at': cons.created_at.isoformat()
+            })
+        
+        return jsonify({
+            "success": True,
+            "consumptions": list(beverage_totals.values()),
+            "period": {"year": (year or target_start.year), "month": (month or target_start.month)}
+        })
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Failed to fetch consumptions: {str(e)}"}), 500
 
 @bp.route("/admin_consumption_history")
 def admin_consumption_history():

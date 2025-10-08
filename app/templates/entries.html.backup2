@@ -97,23 +97,35 @@ window.addEventListener('load', function(){ setTimeout(function(){ window.scroll
                                         <div class="controls-row">
                                             <div class="quantity-controls">
                                                 {% if price_info %}
-                                                    <button class="quantity-btn decrease-btn" data-action="decrease" title="Decrease by 1">
-                                                        <i class="fas fa-minus"></i>
-                                                    </button>
-                                                    <span class="quantity-display">0</span>
-                                                    <button class="quantity-btn increase-btn" data-action="increase" title="Increase by 1">
-                                                        <i class="fas fa-plus"></i>
-                                                    </button>
-                                                    
+                                                    <div class="quantity-input-group">
+                                                        <button class="quantity-btn decrease-btn" data-action="decrease" title="Decrease by 1">
+                                                            <i class="fas fa-minus"></i>
+                                                        </button>
+                                                        <input type="number" class="quantity-input" min="0" max="99" value="0" data-beverage-id="{{ beverage.id }}">
+                                                        <button class="quantity-btn increase-btn" data-action="increase" title="Increase by 1">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="quantity-quick-buttons">
+                                                        <button class="quantity-quick-btn" data-action="add" data-amount="5" title="Add 5">+5</button>
+                                                        <button class="quantity-quick-btn" data-action="add" data-amount="10" title="Add 10">+10</button>
+                                                        <button class="quantity-quick-btn" data-action="add" data-amount="25" title="Add 25">+25</button>
+                                                    </div>
                                                 {% else %}
-                                                    <button class="quantity-btn decrease-btn" disabled title="No price set for this item">
-                                                        <i class="fas fa-minus"></i>
-                                                    </button>
-                                                    <span class="quantity-display">0</span>
-                                                    <button class="quantity-btn increase-btn" disabled title="No price set for this item">
-                                                        <i class="fas fa-plus"></i>
-                                                    </button>
-                                                    
+                                                    <div class="quantity-input-group">
+                                                        <button class="quantity-btn decrease-btn" disabled title="No price set for this item">
+                                                            <i class="fas fa-minus"></i>
+                                                        </button>
+                                                        <input type="number" class="quantity-input" min="0" max="99" value="0" disabled>
+                                                        <button class="quantity-btn increase-btn" disabled title="No price set for this item">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div class="quantity-quick-buttons">
+                                                        <button class="quantity-quick-btn" disabled>+5</button>
+                                                        <button class="quantity-quick-btn" disabled>+10</button>
+                                                        <button class="quantity-quick-btn" disabled>+25</button>
+                                                    </div>
                                                 {% endif %}
                                             </div>
                                             

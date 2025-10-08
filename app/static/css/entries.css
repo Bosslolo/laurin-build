@@ -38,6 +38,117 @@ body {
     overflow-x: hidden;
 }
 
+/* iPad/Tablet scaling - apply to various tablet sizes */
+@media (max-width: 1200px) and (min-width: 600px) {
+    /* Create a fixed background that doesn't scale */
+    body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--gradient-main);
+        z-index: -2;
+        pointer-events: none;
+    }
+    
+    /* Scale the content container instead of body */
+    .container {
+        transform: scale(1.4);
+        transform-origin: top center;
+    }
+    
+    /* Scale confirmation modal for better iPad visibility */
+    .modal-dialog {
+        transform: scale(1.4);
+        transform-origin: center center;
+    }
+    
+    .modal-content {
+        border-radius: 14px; /* Scale up border radius */
+    }
+    
+    .modal-header {
+        padding: 2.8rem; /* Scale up header padding */
+        font-size: 1.4rem; /* Scale up header text */
+    }
+    
+    .modal-body {
+        padding: 2.8rem; /* Scale up body padding */
+        font-size: 1.4rem; /* Scale up body text */
+    }
+    
+    .modal-footer {
+        padding: 2.8rem; /* Scale up footer padding */
+    }
+    
+    .modal-footer .btn {
+        padding: 1.4rem 2.8rem; /* Scale up button padding */
+        font-size: 1.4rem; /* Scale up button text */
+        border-radius: 14px; /* Scale up border radius */
+    }
+}
+
+/* Additional iPad-specific media queries */
+@media (max-width: 1366px) and (min-width: 1024px) and (orientation: portrait) {
+    body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--gradient-main);
+        z-index: -2;
+        pointer-events: none;
+    }
+    
+    .container {
+        transform: scale(1.4);
+        transform-origin: top center;
+    }
+}
+
+@media (max-width: 1024px) and (min-width: 768px) and (orientation: landscape) {
+    body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--gradient-main);
+        z-index: -2;
+        pointer-events: none;
+    }
+    
+    .container {
+        transform: scale(1.4);
+        transform-origin: top center;
+    }
+}
+
+/* Touch device scaling - for devices that support touch */
+@media (hover: none) and (pointer: coarse) {
+    body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--gradient-main);
+        z-index: -2;
+        pointer-events: none;
+    }
+    
+    .container {
+        transform: scale(1.4);
+        transform-origin: top center;
+    }
+}
+
 /* Subtle background overlay */
 body::before {
     content: '';
@@ -63,7 +174,7 @@ body::before {
     position: relative;
     z-index: 1;
     max-width: 1000px;
-    min-height: calc(100vh - 3rem);
+    min-height: auto;
 }
 
 /* User Info Section - Clean and centered */
@@ -260,6 +371,7 @@ body::before {
     border: 1px solid rgba(139, 69, 19, 0.15);
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
+
 
 .consumed-info {
     text-align: center;
@@ -458,6 +570,7 @@ body[data-theme="winter"] {
         padding: 0.35rem 0.7rem;
     }
     
+    
     .consumed-info {
         padding: 0.35rem 0.6rem;
     }
@@ -534,6 +647,7 @@ body[data-theme="winter"] {
         font-size: 0.7rem;
     }
     
+    
     .controls-row {
         gap: 0.8rem;
     }
@@ -586,4 +700,551 @@ body[data-theme="winter"] {
     .consumed-label {
         font-size: 0.6rem;
     }
+}
+
+/* =========================== */
+/* PIN OVERLAY STYLES */
+/* =========================== */
+
+/* PIN Authentication Overlay Styles */
+.pin-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 9999;
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.pin-modal {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 90%;
+    animation: slideIn 0.3s ease;
+    margin: 0 auto; /* Ensure centering */
+}
+
+.pin-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 20px 20px 0 0;
+    text-align: center;
+}
+
+.pin-header h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.pin-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.pin-body {
+    padding: 2rem;
+}
+
+.pin-input-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.pin-input {
+    flex: 1;
+    padding: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    text-align: center;
+    letter-spacing: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.pin-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.pin-submit-btn {
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 60px;
+}
+
+.pin-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.pin-submit-btn:active {
+    transform: translateY(0);
+}
+
+.pin-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.pin-cancel-btn {
+    padding: 0.8rem 1.5rem;
+    background: transparent;
+    color: #666;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pin-cancel-btn:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
+}
+
+.pin-error {
+    background: #fee;
+    color: #c33;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid #fcc;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* iPad-specific PIN modal scaling */
+@media (max-width: 1200px) and (min-width: 600px) {
+    .pin-modal {
+        transform: scale(1.4);
+        transform-origin: center center;
+        max-width: 560px; /* 400px * 1.4 */
+        margin: 0 auto; /* Ensure centering */
+    }
+    
+    .pin-header {
+        padding: 2.8rem; /* 2rem * 1.4 */
+        font-size: 1.4rem; /* Scale up text */
+    }
+    
+    .pin-body {
+        padding: 2.8rem; /* 2rem * 1.4 */
+    }
+    
+    .pin-input {
+        padding: 1.4rem; /* Scale up input padding */
+        font-size: 1.4rem; /* Scale up input text */
+        border-radius: 14px; /* Scale up border radius */
+    }
+    
+    .pin-submit-btn {
+        padding: 1.4rem 2.8rem; /* Scale up button padding */
+        font-size: 1.4rem; /* Scale up button text */
+        border-radius: 14px; /* Scale up border radius */
+    }
+}
+
+/* Additional iPad-specific media queries for PIN modal */
+@media (max-width: 1366px) and (min-width: 1024px) and (orientation: portrait) {
+    .pin-modal {
+        transform: scale(1.4);
+        transform-origin: center center;
+        max-width: 560px;
+        margin: 0 auto;
+    }
+    
+    .pin-header {
+        padding: 2.8rem;
+        font-size: 1.4rem;
+    }
+    
+    .pin-body {
+        padding: 2.8rem;
+    }
+    
+    .pin-input {
+        padding: 1.4rem;
+        font-size: 1.4rem;
+        border-radius: 14px;
+    }
+    
+    .pin-submit-btn {
+        padding: 1.4rem 2.8rem;
+        font-size: 1.4rem;
+        border-radius: 14px;
+    }
+}
+
+@media (max-width: 1024px) and (min-width: 768px) and (orientation: landscape) {
+    .pin-modal {
+        transform: scale(1.4);
+        transform-origin: center center;
+        max-width: 560px;
+        margin: 0 auto;
+    }
+    
+    .pin-header {
+        padding: 2.8rem;
+        font-size: 1.4rem;
+    }
+    
+    .pin-body {
+        padding: 2.8rem;
+    }
+    
+    .pin-input {
+        padding: 1.4rem;
+        font-size: 1.4rem;
+        border-radius: 14px;
+    }
+    
+    .pin-submit-btn {
+        padding: 1.4rem 2.8rem;
+        font-size: 1.4rem;
+        border-radius: 14px;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .pin-modal {
+        transform: scale(1.4);
+        transform-origin: center center;
+        max-width: 560px;
+        margin: 0 auto;
+    }
+    
+    .pin-header {
+        padding: 2.8rem;
+        font-size: 1.4rem;
+    }
+    
+    .pin-body {
+        padding: 2.8rem;
+    }
+    
+    .pin-input {
+        padding: 1.4rem;
+        font-size: 1.4rem;
+        border-radius: 14px;
+    }
+    
+    .pin-submit-btn {
+        padding: 1.4rem 2.8rem;
+        font-size: 1.4rem;
+        border-radius: 14px;
+    }
+}
+
+/* =========================== */
+/* PIN OVERLAY CENTERING FIX */
+/* =========================== */
+
+/* Ensure PIN overlay is properly centered when displayed */
+.pin-overlay[style*="display: flex"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Alternative centering method for PIN modal */
+.pin-overlay .pin-modal {
+    position: relative;
+    margin: 0 auto;
+}
+
+/* =========================== */
+/* PIN MODAL THEME SUPPORT */
+/* =========================== */
+
+/* Coffee Theme (Default) */
+body[data-theme="coffee"] .pin-modal,
+body.theme-coffee .pin-modal {
+    background: linear-gradient(135deg, #f5e6d3 0%, #e8d5c4 100%) !important;
+}
+
+body[data-theme="coffee"] .pin-header,
+body.theme-coffee .pin-header {
+    background: linear-gradient(135deg, #8B4513 0%, #6F3609 100%) !important;
+    color: #f5e6d3 !important;
+}
+
+body[data-theme="coffee"] .pin-input,
+body.theme-coffee .pin-input {
+    background: #f5e6d3 !important;
+    color: #8B4513 !important;
+    border: 2px solid #8B4513 !important;
+}
+
+body[data-theme="coffee"] .pin-input:focus,
+body.theme-coffee .pin-input:focus {
+    border-color: #A0522D !important;
+    box-shadow: 0 0 0 3px rgba(160, 82, 45, 0.1) !important;
+}
+
+body[data-theme="coffee"] .pin-submit-btn,
+body.theme-coffee .pin-submit-btn {
+    background: linear-gradient(135deg, #8B4513 0%, #6F3609 100%) !important;
+    color: #f5e6d3 !important;
+}
+
+body[data-theme="coffee"] .pin-submit-btn:hover,
+body.theme-coffee .pin-submit-btn:hover {
+    background: linear-gradient(135deg, #A0522D 0%, #8B4513 100%) !important;
+    box-shadow: 0 5px 15px rgba(139, 69, 19, 0.4) !important;
+}
+
+body[data-theme="coffee"] .pin-cancel-btn,
+body.theme-coffee .pin-cancel-btn {
+    background: rgba(139, 69, 19, 0.1) !important;
+    color: #8B4513 !important;
+    border: 2px solid #8B4513 !important;
+}
+
+body[data-theme="coffee"] .pin-cancel-btn:hover,
+body.theme-coffee .pin-cancel-btn:hover {
+    background: rgba(139, 69, 19, 0.2) !important;
+    color: #8B4513 !important;
+    border: 2px solid #8B4513 !important;
+}
+
+/* Spring Theme */
+body[data-theme="spring"] .pin-modal,
+body.theme-spring .pin-modal {
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%) !important;
+}
+
+body[data-theme="spring"] .pin-header,
+body.theme-spring .pin-header {
+    background: linear-gradient(135deg, #ff4081 0%, #e91e63 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="spring"] .pin-input,
+body.theme-spring .pin-input {
+    background: #fce4ec !important;
+    color: #ff4081 !important;
+    border: 2px solid #ff4081 !important;
+}
+
+body[data-theme="spring"] .pin-input:focus,
+body.theme-spring .pin-input:focus {
+    border-color: #e91e63 !important;
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1) !important;
+}
+
+body[data-theme="spring"] .pin-submit-btn,
+body.theme-spring .pin-submit-btn {
+    background: linear-gradient(135deg, #ff4081 0%, #e91e63 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="spring"] .pin-submit-btn:hover,
+body.theme-spring .pin-submit-btn:hover {
+    background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%) !important;
+    box-shadow: 0 5px 15px rgba(255, 64, 129, 0.4) !important;
+}
+
+body[data-theme="spring"] .pin-cancel-btn,
+body.theme-spring .pin-cancel-btn {
+    background: rgba(255, 64, 129, 0.1) !important;
+    color: #ff4081 !important;
+    border: 2px solid #ff4081 !important;
+}
+
+body[data-theme="spring"] .pin-cancel-btn:hover,
+body.theme-spring .pin-cancel-btn:hover {
+    background: rgba(255, 64, 129, 0.2) !important;
+    color: #ff4081 !important;
+    border: 2px solid #ff4081 !important;
+}
+
+/* Summer Theme */
+body[data-theme="summer"] .pin-modal,
+body.theme-summer .pin-modal {
+    background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%) !important;
+}
+
+body[data-theme="summer"] .pin-header,
+body.theme-summer .pin-header {
+    background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="summer"] .pin-input,
+body.theme-summer .pin-input {
+    background: #fff9c4 !important;
+    color: #ffa726 !important;
+    border: 2px solid #ffa726 !important;
+}
+
+body[data-theme="summer"] .pin-input:focus,
+body.theme-summer .pin-input:focus {
+    border-color: #fb8c00 !important;
+    box-shadow: 0 0 0 3px rgba(251, 140, 0, 0.1) !important;
+}
+
+body[data-theme="summer"] .pin-submit-btn,
+body.theme-summer .pin-submit-btn {
+    background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="summer"] .pin-submit-btn:hover,
+body.theme-summer .pin-submit-btn:hover {
+    background: linear-gradient(135deg, #fb8c00 0%, #f57c00 100%) !important;
+    box-shadow: 0 5px 15px rgba(255, 167, 38, 0.4) !important;
+}
+
+body[data-theme="summer"] .pin-cancel-btn,
+body.theme-summer .pin-cancel-btn {
+    background: rgba(255, 167, 38, 0.1) !important;
+    color: #ffa726 !important;
+    border: 2px solid #ffa726 !important;
+}
+
+body[data-theme="summer"] .pin-cancel-btn:hover,
+body.theme-summer .pin-cancel-btn:hover {
+    background: rgba(255, 167, 38, 0.2) !important;
+    color: #ffa726 !important;
+    border: 2px solid #ffa726 !important;
+}
+
+/* Autumn Theme */
+body[data-theme="autumn"] .pin-modal,
+body.theme-autumn .pin-modal {
+    background: linear-gradient(135deg, #ffe8d6 0%, #ffd7ba 100%) !important;
+}
+
+body[data-theme="autumn"] .pin-header,
+body.theme-autumn .pin-header {
+    background: linear-gradient(135deg, #ff6f00 0%, #e65100 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="autumn"] .pin-input,
+body.theme-autumn .pin-input {
+    background: #ffe8d6 !important;
+    color: #ff6f00 !important;
+    border: 2px solid #ff6f00 !important;
+}
+
+body[data-theme="autumn"] .pin-input:focus,
+body.theme-autumn .pin-input:focus {
+    border-color: #e65100 !important;
+    box-shadow: 0 0 0 3px rgba(230, 81, 0, 0.1) !important;
+}
+
+body[data-theme="autumn"] .pin-submit-btn,
+body.theme-autumn .pin-submit-btn {
+    background: linear-gradient(135deg, #ff6f00 0%, #e65100 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="autumn"] .pin-submit-btn:hover,
+body.theme-autumn .pin-submit-btn:hover {
+    background: linear-gradient(135deg, #e65100 0%, #d84315 100%) !important;
+    box-shadow: 0 5px 15px rgba(255, 111, 0, 0.4) !important;
+}
+
+body[data-theme="autumn"] .pin-cancel-btn,
+body.theme-autumn .pin-cancel-btn {
+    background: rgba(255, 111, 0, 0.1) !important;
+    color: #ff6f00 !important;
+    border: 2px solid #ff6f00 !important;
+}
+
+body[data-theme="autumn"] .pin-cancel-btn:hover,
+body.theme-autumn .pin-cancel-btn:hover {
+    background: rgba(255, 111, 0, 0.2) !important;
+    color: #ff6f00 !important;
+    border: 2px solid #ff6f00 !important;
+}
+
+/* Winter Theme */
+body[data-theme="winter"] .pin-modal,
+body.theme-winter .pin-modal {
+    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%) !important;
+}
+
+body[data-theme="winter"] .pin-header,
+body.theme-winter .pin-header {
+    background: linear-gradient(135deg, #0288d1 0%, #01579b 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="winter"] .pin-input,
+body.theme-winter .pin-input {
+    background: #e1f5fe !important;
+    color: #0288d1 !important;
+    border: 2px solid #0288d1 !important;
+}
+
+body[data-theme="winter"] .pin-input:focus,
+body.theme-winter .pin-input:focus {
+    border-color: #01579b !important;
+    box-shadow: 0 0 0 3px rgba(1, 87, 155, 0.1) !important;
+}
+
+body[data-theme="winter"] .pin-submit-btn,
+body.theme-winter .pin-submit-btn {
+    background: linear-gradient(135deg, #0288d1 0%, #01579b 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="winter"] .pin-submit-btn:hover,
+body.theme-winter .pin-submit-btn:hover {
+    background: linear-gradient(135deg, #01579b 0%, #004d7a 100%) !important;
+    box-shadow: 0 5px 15px rgba(2, 136, 209, 0.4) !important;
+}
+
+body[data-theme="winter"] .pin-cancel-btn,
+body.theme-winter .pin-cancel-btn {
+    background: rgba(2, 136, 209, 0.1) !important;
+    color: #0288d1 !important;
+    border: 2px solid #0288d1 !important;
+}
+
+body[data-theme="winter"] .pin-cancel-btn:hover,
+body.theme-winter .pin-cancel-btn:hover {
+    background: rgba(2, 136, 209, 0.2) !important;
+    color: #0288d1 !important;
+    border: 2px solid #0288d1 !important;
 }
