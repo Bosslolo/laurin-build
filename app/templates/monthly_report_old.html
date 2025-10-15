@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Consumption Report - {{ report_date.strftime('%B %Y') }}</title>
+    <meta name="theme-color" content="{{ theme_color|default('#222222') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    <style>
+        /* Coffee Theme (Default) */
+        :root {
+            --main-bg: #A4542C;
+            --main-bg-light: #D4A574;
+            --main-box: #F1DEC7;
+            --button-dark: #8B4513;
+            --button-light: #D2691E;
+            --text-dark: #2C1810;
+            --text-light: #FFFFFF;
+            --border-color: #C4A484;
+        }
+        
+        /* Spring Theme */
+        body[data-theme="spring"] {
+            --main-bg: #4A7C59;
+            --main-bg-light: #7BA68A;
+            --main-box: #E8F5E8;
+            --button-dark: #2E7D32;
+            --button-light: #66BB6A;
+            --text-dark: #1B5E20;
+            --text-light: #FFFFFF;
+            --border-color: #A5D6A7;
+        }
+        
+        /* Summer Theme */
+        body[data-theme="summer"] {
+            --main-bg: #E65100;
+            --main-bg-light: #FF8A65;
+            --main-box: #FFF3E0;
+            --button-dark: #D84315;
+            --button-light: #FFAB91;
+            --text-dark: #BF360C;
+            --text-light: #FFFFFF;
+            --border-color: #FFCCBC;
+        }
+        
+        /* Autumn Theme */
+        body[data-theme="autumn"] {
+            --main-bg: #D84315;
+            --main-bg-light: #FF7043;
+            --main-box: #FBE9E7;
+            --button-dark: #BF360C;
+            --button-light: #FFAB91;
+            --text-dark: #8D1B00;
+            --text-light: #FFFFFF;
+            --border-color: #FFAB91;
+        }
+        
+        /* Winter Theme */
+        body[data-theme="winter"] {
+            --main-bg: #1565C0;
+            --main-bg-light: #42A5F5;
+            --main-box: #E3F2FD;
+            --button-dark: #0D47A1;
+            --button-light: #90CAF9;
+            --text-dark: #0D47A1;
+            --text-light: #FFFFFF;
+            --border-color: #BBDEFB;
+        }
+        
+        /* Base Styles */
+        body {
+            background: linear-gradient(135deg, var(--main-bg) 0%, var(--main-bg-light) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .container {
+            background-color: var(--main-box);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 30px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .card {
+            background-color: var(--main-box);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Button Styles */
+        .btn-primary {
+            background-color: var(--button-dark);
+            border-color: var(--button-dark);
+            color: var(--text-light);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--button-light);
+            border-color: var(--button-light);
+            color: var(--text-dark);
+        }
+        
+        .btn-secondary {
+            background-color: var(--button-light);
+            border-color: var(--button-light);
+            color: var(--text-dark);
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--button-dark);
+            border-color: var(--button-dark);
+            color: var(--text-light);
+        }
+        
+        /* Table Styles */
+        .table {
+            color: var(--text-dark);
+            background-color: var(--main-box);
+        }
+        
+        .table th {
+            background-color: var(--button-dark);
+            color: var(--text-light);
+            border-color: var(--border-color);
+        }
+        
+        .table td {
+            border-color: var(--border-color);
+        }
+        
+        /* Text Styles */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-dark);
+        }
+        
+        .text-muted {
+            color: var(--text-dark) !important;
+        }
+    </style>
+</head>
+<body data-theme="{{ theme|default('coffee') }}" class="theme-{{ theme|default('coffee') }}">
+    <div class="container-fluid">
+        <div class="report-container">
+            <!-- Header -->
+            <div class="report-header">
+                <h1 class="report-title">
+                    Monthly Consumption Report
+                </h1>
+                <p class="report-subtitle">{{ report_date.strftime('%B %Y') }}</p>
+            </div>
+            
+            <!-- Date Range Selector -->
+            
+            <!-- Date Range Selector -->
+            <div class="date-selector">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <h5><i class="fas fa-calendar-alt"></i> Select Period</h5>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-primary w-100" onclick="toggleDateRange()" id="toggleBtn">
+                                    <i class="fas fa-calendar"></i> Custom Range
+                                </button>
+                            </div>
+                            <div class="col-md-3" id="monthYearSelector">
+                                <select class="form-select" id="yearSelect">
+                                    {% set unique_years = [] %}
+                                    {% for month_data in available_months %}
+                                        {% if month_data.year not in unique_years %}
+                                            {% set _ = unique_years.append(month_data.year) %}
+                                            <option value="{{ month_data.year }}" {% if month_data.year == current_year %}selected{% endif %}>
+                                                {{ month_data.year }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3" id="monthSelector">
+                                <select class="form-select" id="monthSelect">
+                                    {% set month_names = {1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May', 6: 'June', 7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November', 12: 'December'} %}
+                                    {% for month_data in available_months %}
+                                        {% if month_data.year == current_year %}
+                                        <option value="{{ month_data.month }}" {% if month_data.month == current_month %}selected{% endif %}>
+                                            {{ month_names[month_data.month] }}
+                                        </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6" id="dateRangeSelector" style="display: none;">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <input type="date" class="form-control" id="startDate" value="{{ start_date.strftime('%Y-%m-%d') if use_date_range else '' }}">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="date" class="form-control" id="endDate" value="{{ end_date.strftime('%Y-%m-%d') if use_date_range else '' }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Export Buttons -->
+            <div class="export-buttons text-center">
+                <button class="btn btn-custom me-2" onclick="exportToCSV()">
+                    <i class="fas fa-download"></i> Export CSV
+                </button>
+                <button class="btn btn-custom me-2" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+                <a href="{{ url_for('routes.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+            
+            {% if summary_stats and summary_stats.total_users > 0 %}
+            <!-- Summary Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number">{{ summary_stats.total_users }}</div>
+                        <div class="stats-label">Active Users</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number">{{ summary_stats.total_consumptions }}</div>
+                        <div class="stats-label">Total Orders</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number">{{ summary_stats.total_quantity }}</div>
+                        <div class="stats-label">Total Items</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-number">€{{ "%.2f"|format(summary_stats.total_revenue_cents / 100) }}</div>
+                        <div class="stats-label">Total Revenue</div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if daily_stats %}
+            <!-- Daily Statistics -->
+            <div class="daily-stats-container">
+                <h4><i class="fas fa-calendar-day"></i> Daily Breakdown</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Orders</th>
+                                <th>Items</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day in daily_stats %}
+                            <tr>
+                                <td>
+                                    <strong>{{ day.date.strftime('%A, %B %d, %Y') }}</strong>
+                                </td>
+                                <td>{{ day.daily_consumptions }}</td>
+                                <td>{{ day.daily_quantity }}</td>
+                                <td class="cost-highlight">€{{ "%.2f"|format(day.daily_revenue_cents / 100) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- User Summaries -->
+            <div class="table-container">
+                <h4><i class="fas fa-users"></i> User Summary</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Total Items</th>
+                                <th>Orders</th>
+                                <th>Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in user_summaries %}
+                            <tr>
+                                <td>
+                                    <strong>{{ user.first_name }} {{ user.last_name }}</strong>
+                                    {% if user.email %}
+                                        <br><small class="text-muted">{{ user.email }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ user.role_name }}</span>
+                                </td>
+                                <td>{{ user.total_quantity }}</td>
+                                <td>{{ user.total_consumptions }}</td>
+                                <td class="cost-highlight">€{{ "%.2f"|format(user.total_cost_cents / 100) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Detailed Consumption -->
+            <div class="table-container">
+                <h4><i class="fas fa-list"></i> Detailed Consumption</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="consumptionTable">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Beverage</th>
+                                <th>Category</th>
+                                <th>Quantity</th>
+                                <th>Orders</th>
+                                <th>Avg Price</th>
+                                <th>Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for consumption in consumptions %}
+                            <tr>
+                                <td>
+                                    <strong>{{ consumption.first_name }} {{ consumption.last_name }}</strong>
+                                    {% if consumption.email %}
+                                        <br><small class="text-muted">{{ consumption.email }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ consumption.beverage_name }}</td>
+                                <td>
+                                    <span class="category-badge category-{{ consumption.category }}">
+                                        {{ consumption.category|title }}
+                                    </span>
+                                </td>
+                                <td>{{ consumption.total_quantity }}</td>
+                                <td>{{ consumption.consumption_count }}</td>
+                                <td>€{{ "%.2f"|format(consumption.avg_price_cents / 100) }}</td>
+                                <td class="cost-highlight">€{{ "%.2f"|format(consumption.total_cost_cents / 100) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            {% else %}
+            <!-- No Data -->
+            <div class="no-data">
+                <i class="fas fa-chart-bar fa-3x mb-3" style="color: #ccc;"></i>
+                <h4>No consumption data for {{ report_date.strftime('%B %Y') }}</h4>
+                <p>There are no consumption records for the selected month.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme Switcher for Monthly Report
+        class ThemeSwitcher {
+            constructor() {
+                this.currentTheme = localStorage.getItem('selectedTheme') || 'coffee';
+                this.init();
+            }
+
+            init() {
+                // Set initial theme
+                this.applyTheme(this.currentTheme);
+                
+                // Listen for theme changes from other windows/tabs
+                window.addEventListener('message', (event) => {
+                    if (event.data.type === 'THEME_CHANGE') {
+                        this.currentTheme = event.data.theme;
+                        this.applyTheme(event.data.theme);
+                    }
+                });
+
+                // Listen for storage changes (when theme is changed in another tab)
+                window.addEventListener('storage', (event) => {
+                    if (event.key === 'selectedTheme') {
+                        this.currentTheme = event.newValue || 'coffee';
+                        this.applyTheme(this.currentTheme);
+                    }
+                });
+            }
+
+            applyTheme(theme) {
+                document.body.setAttribute('data-theme', theme);
+            }
+        }
+
+        // Initialize theme when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            new ThemeSwitcher();
+        });
+    </script>
+    <script>
+        // Date range toggle functionality
+        function toggleDateRange() {
+            const monthYearSelector = document.getElementById('monthYearSelector');
+            const monthSelector = document.getElementById('monthSelector');
+            const dateRangeSelector = document.getElementById('dateRangeSelector');
+            const toggleBtn = document.getElementById('toggleBtn');
+            
+            if (dateRangeSelector.style.display === 'none') {
+                // Switch to date range mode
+                monthYearSelector.style.display = 'none';
+                monthSelector.style.display = 'none';
+                dateRangeSelector.style.display = 'block';
+                toggleBtn.innerHTML = '<i class="fas fa-calendar-alt"></i> Month View';
+                toggleBtn.className = 'btn btn-outline-secondary w-100';
+            } else {
+                // Switch to month/year mode
+                monthYearSelector.style.display = 'block';
+                monthSelector.style.display = 'block';
+                dateRangeSelector.style.display = 'none';
+                toggleBtn.innerHTML = '<i class="fas fa-calendar"></i> Custom Range';
+                toggleBtn.className = 'btn btn-outline-primary w-100';
+            }
+        }
+        
+        // Month selector functionality
+        document.getElementById('yearSelect').addEventListener('change', updateReport);
+        document.getElementById('monthSelect').addEventListener('change', updateReport);
+        
+        // Date range functionality
+        document.getElementById('startDate').addEventListener('change', updateDateRange);
+        document.getElementById('endDate').addEventListener('change', updateDateRange);
+        
+        function updateReport() {
+            const year = document.getElementById('yearSelect').value;
+            const month = document.getElementById('monthSelect').value;
+            window.location.href = `{{ url_for('routes.monthly_report') }}?year=${year}&month=${month}`;
+        }
+        
+        function updateDateRange() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (startDate && endDate) {
+                window.location.href = `{{ url_for('routes.monthly_report') }}?start_date=${startDate}&end_date=${endDate}`;
+            }
+        }
+        
+        // Export to CSV
+        function exportToCSV() {
+            const table = document.getElementById('consumptionTable');
+            const rows = table.querySelectorAll('tr');
+            let csv = [];
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = [];
+                const cols = rows[i].querySelectorAll('td, th');
+                
+                for (let j = 0; j < cols.length; j++) {
+                    // Clean up the text content
+                    let text = cols[j].innerText.replace(/\n/g, ' ').trim();
+                    row.push('"' + text + '"');
+                }
+                csv.push(row.join(','));
+            }
+            
+            const csvContent = csv.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'consumption_report_{{ report_date.strftime("%Y_%m") }}.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/main/theme.js') }}" defer></script>
+</body>
+</html>

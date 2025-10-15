@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  web:
+    container_name: schuelerfirma_web
+    build:
+      context: .
+      dockerfile: Dockerfile.laptop
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://user:pass@db:5432/db
+      - SECRET_KEY=dev-key
+    volumes:
+      - ./app:/app/app
+      - ./instance:/app/instance
+    ports:
+      - "5003:5000"
+      - "5004:5000"
+    depends_on:
+      - db
+      - redis
+
+  db:
+    container_name: schuelerfirma_db
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=db
+    volumes:
+      - schuelerfirma_privat_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  adminer:
+    container_name: schuelerfirma_adminer
+    image: adminer:4
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  redis:
+    container_name: schuelerfirma_redis
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+volumes:
+  schuelerfirma_privat_pgdata:
+    driver: local
+
+
