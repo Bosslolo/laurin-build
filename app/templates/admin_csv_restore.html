@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>CSV Restore - CSH Coffee System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    <style>
+        /* Ensure theme variables are available */
+        :root {
+            --main-bg: #A4542C;
+            --main-bg-light: #D4A574;
+            --main-box: #F1DEC7;
+            --button-dark: #8B4513;
+            --button-light: #D2691E;
+            --text-dark: #2C1810;
+            --text-light: #FFFFFF;
+            --border-color: #C4A484;
+            --accent-color: {{ theme_color }};
+        }
+        
+        body[data-theme="spring"] {
+            --main-bg: #4A7C59;
+            --main-bg-light: #7BA68A;
+            --main-box: #E8F5E8;
+            --button-dark: #2E7D32;
+            --button-light: #66BB6A;
+            --text-dark: #1B5E20;
+            --text-light: #FFFFFF;
+            --border-color: #A5D6A7;
+        }
+        
+        body[data-theme="summer"] {
+            --main-bg: #E65100;
+            --main-bg-light: #FF8A65;
+            --main-box: #FFF3E0;
+            --button-dark: #D84315;
+            --button-light: #FFAB91;
+            --text-dark: #BF360C;
+            --text-light: #FFFFFF;
+            --border-color: #FFCCBC;
+        }
+        
+        body[data-theme="autumn"] {
+            --main-bg: #D84315;
+            --main-bg-light: #FF7043;
+            --main-box: #FFEBEE;
+            --button-dark: #BF360C;
+            --button-light: #FF8A65;
+            --text-dark: #8D1B00;
+            --text-light: #FFFFFF;
+            --border-color: #FFAB91;
+        }
+        
+        body[data-theme="winter"] {
+            --main-bg: #1565C0;
+            --main-bg-light: #42A5F5;
+            --main-box: #E3F2FD;
+            --button-dark: #0D47A1;
+            --button-light: #64B5F6;
+            --text-dark: #0D47A1;
+            --text-light: #FFFFFF;
+            --border-color: #90CAF9;
+        }
+        
+        body {
+            background: var(--main-bg);
+            color: var(--text-dark);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            background: var(--main-box);
+            min-height: 100vh;
+            border-right: 2px solid var(--border-color);
+        }
+        
+        .sidebar-content {
+            padding: 20px;
+        }
+        
+        .logo-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .logo-section img {
+            max-width: 60px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .nav-item {
+            display: block;
+            padding: 12px 15px;
+            color: var(--text-dark);
+            text-decoration: none;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            transition: all 0.3s;
+        }
+        
+        .nav-item:hover {
+            background: var(--main-bg-light);
+            color: var(--text-light);
+        }
+        
+        .nav-item.active {
+            background: var(--accent-color);
+            color: var(--text-light);
+        }
+        
+        .nav-item i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        
+        .main-content {
+            padding: 30px;
+        }
+        
+        .content-header {
+            margin-bottom: 30px;
+        }
+        
+        .content-header h1 {
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+        
+        .card {
+            background: var(--main-box);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background: var(--main-bg-light);
+            color: var(--text-light);
+            border-bottom: 2px solid var(--border-color);
+            padding: 15px 20px;
+            font-weight: bold;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .btn-primary {
+            background: var(--button-dark);
+            border-color: var(--button-dark);
+            color: var(--text-light);
+        }
+        
+        .btn-primary:hover {
+            background: var(--button-light);
+            border-color: var(--button-light);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .file-list-item {
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background: var(--main-box);
+        }
+        
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .file-name {
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+        
+        .file-date {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .results-container {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body data-theme="{{ theme }}">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="sidebar-content">
+                    <div class="logo-section">
+                        <img src="{{ url_for('static', filename='images/CSH-Logo.png') }}" alt="CSH Logo" class="logo">
+                        <h4>CSH Coffee</h4>
+                    </div>
+                    
+                    <nav class="nav-menu">
+                        <a href="/" class="nav-item">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                        <a href="/admin/cashbook/overview" class="nav-item">
+                            <i class="fas fa-calculator"></i>
+                            <span>Cashbook</span>
+                        </a>
+                        <a href="/admin/display-items" class="nav-item">
+                            <i class="fas fa-coffee"></i>
+                            <span>Beverages</span>
+                        </a>
+                        <a href="/admin/payments" class="nav-item">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Payments</span>
+                        </a>
+                        <a href="/admin/csv-restore" class="nav-item active">
+                            <i class="fas fa-file-import"></i>
+                            <span>CSV Restore</span>
+                        </a>
+                        <a href="/admin/access-logs" class="nav-item">
+                            <i class="fas fa-history"></i>
+                            <span>Access Logs</span>
+                        </a>
+                        <a href="/admin/logout" class="nav-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="content-header">
+                    <h1><i class="fas fa-file-import"></i> CSV Restore</h1>
+                    <p class="text-muted">Restore consumptions from CSV report files</p>
+                </div>
+                
+                <!-- Warning Box -->
+                <div class="warning-box">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Warning</h5>
+                    <p><strong>This will delete consumptions from the target month</strong> and replace them with data from the selected CSV file. Other months' data will remain unchanged. Make sure you have a backup before proceeding!</p>
+                </div>
+                
+                <!-- Available Files -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-folder-open"></i> Available CSV Files
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Select a CSV file from the list below to restore consumptions:</p>
+                        <div id="fileList">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Upload New File -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-upload"></i> Upload CSV File
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm">
+                            <div class="mb-3">
+                                <label for="csvFile" class="form-label">Select CSV File</label>
+                                <input type="file" class="form-control" id="csvFile" accept=".csv" required>
+                                <small class="form-text text-muted">File should be in format: consumption_report_YYYY_MM.csv</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Upload and Restore
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Progress -->
+                <div class="progress-container card">
+                    <div class="card-body">
+                        <h5><i class="fas fa-spinner fa-spin"></i> Restoring...</h5>
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                        </div>
+                        <p class="mt-2" id="progressText">Processing...</p>
+                    </div>
+                </div>
+                
+                <!-- Results -->
+                <div class="results-container card">
+                    <div class="card-body">
+                        <h5 id="resultTitle"></h5>
+                        <div id="resultContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load available CSV files
+        async function loadFileList() {
+            try {
+                const response = await fetch('/admin/csv-restore/files');
+                const data = await response.json();
+                
+                const fileListDiv = document.getElementById('fileList');
+                
+                if (data.success && data.files.length > 0) {
+                    fileListDiv.innerHTML = '';
+                    data.files.forEach(file => {
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'file-list-item';
+                        
+                        // Extract year/month from filename
+                        const match = file.name.match(/(\d{4})_(\d{2})/);
+                        const dateInfo = match ? `${match[1]}-${match[2]}` : 'Unknown';
+                        
+                        fileItem.innerHTML = `
+                            <div class="file-info">
+                                <div>
+                                    <div class="file-name"><i class="fas fa-file-csv"></i> ${file.name}</div>
+                                    <div class="file-date">Period: ${dateInfo}</div>
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="restoreFromFile('${file.name}')">
+                                    <i class="fas fa-download"></i> Restore
+                                </button>
+                            </div>
+                        `;
+                        fileListDiv.appendChild(fileItem);
+                    });
+                } else {
+                    let message = '<p class="text-muted">No CSV files found in "CSV For each month" folder.</p>';
+                    if (data.error) {
+                        message = `<p class="text-danger">Error: ${data.error}</p>`;
+                    }
+                    fileListDiv.innerHTML = message;
+                }
+            } catch (error) {
+                document.getElementById('fileList').innerHTML = '<p class="text-danger">Error loading files: ' + error.message + '</p>';
+            }
+        }
+        
+        // Restore from existing file
+        async function restoreFromFile(filename) {
+            // Extract year/month from filename
+            const match = filename.match(/(\d{4})_(\d{2})/);
+            const period = match ? `${match[1]}-${match[2]}` : 'the target month';
+            const year = match ? parseInt(match[1]) : null;
+            const month = match ? parseInt(match[2]) : null;
+            
+            if (!confirm(`⚠️ WARNING: This will delete consumptions from ${period} and restore from "${filename}".\n\nOther months' data will remain unchanged.\n\nAre you absolutely sure?`)) {
+                return;
+            }
+            
+            const progressContainer = document.querySelector('.progress-container');
+            const resultsContainer = document.querySelector('.results-container');
+            const progressText = document.getElementById('progressText');
+            
+            progressContainer.style.display = 'block';
+            resultsContainer.style.display = 'none';
+            progressText.textContent = `Restoring from ${filename}...`;
+            
+            try {
+                const response = await fetch('/admin/restore/from_csv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: filename,
+                        year: year,
+                        month: month
+                    })
+                });
+                
+                const data = await response.json();
+                
+                progressContainer.style.display = 'none';
+                resultsContainer.style.display = 'block';
+                
+                if (data.success) {
+                    document.getElementById('resultTitle').innerHTML = '<i class="fas fa-check-circle text-success"></i> Restore Successful!';
+                    document.getElementById('resultContent').innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>Success!</strong> ${data.message}
+                        </div>
+                        <ul class="list-group">
+                            <li class="list-group-item"><strong>Imported:</strong> ${data.imported} consumption records</li>
+                            <li class="list-group-item"><strong>Deleted:</strong> ${data.deleted} previous records</li>
+                            <li class="list-group-item"><strong>Period:</strong> ${data.period}</li>
+                        </ul>
+                        ${data.warnings && data.warnings.length > 0 ? `
+                            <div class="alert alert-warning mt-3">
+                                <strong>Warnings:</strong>
+                                <ul class="mb-0">
+                                    ${data.warnings.slice(0, 10).map(w => `<li>${w}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        ${data.errors && data.errors.length > 0 ? `
+                            <div class="alert alert-danger mt-3">
+                                <strong>Errors:</strong>
+                                <ul class="mb-0">
+                                    ${data.errors.map(e => `<li>${e}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    `;
+                } else {
+                    document.getElementById('resultTitle').innerHTML = '<i class="fas fa-times-circle text-danger"></i> Restore Failed';
+                    document.getElementById('resultContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>Error:</strong> ${data.error || 'Unknown error'}
+                        </div>
+                        ${data.details ? `<pre class="bg-light p-3">${data.details}</pre>` : ''}
+                    `;
+                }
+            } catch (error) {
+                progressContainer.style.display = 'none';
+                resultsContainer.style.display = 'block';
+                document.getElementById('resultTitle').innerHTML = '<i class="fas fa-times-circle text-danger"></i> Restore Failed';
+                document.getElementById('resultContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Handle file upload
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+            
+            // Extract year/month from filename for display
+            const match = file.name.match(/(\d{4})_(\d{2})/);
+            const period = match ? `${match[1]}-${match[2]}` : 'the target month';
+            
+            if (!confirm(`⚠️ WARNING: This will delete consumptions from ${period} and restore from "${file.name}".\n\nOther months' data will remain unchanged.\n\nAre you absolutely sure?`)) {
+                return;
+            }
+            
+            // First upload the file
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const progressContainer = document.querySelector('.progress-container');
+            const resultsContainer = document.querySelector('.results-container');
+            const progressText = document.getElementById('progressText');
+            
+            progressContainer.style.display = 'block';
+            resultsContainer.style.display = 'none';
+            progressText.textContent = `Uploading ${file.name}...`;
+            
+            try {
+                // First upload the file
+                progressText.textContent = `Uploading ${file.name}...`;
+                
+                const uploadResponse = await fetch('/admin/csv-restore/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const uploadData = await uploadResponse.json();
+                
+                if (!uploadData.success) {
+                    throw new Error(uploadData.error || 'Upload failed');
+                }
+                
+                // Extract year/month from filename
+                const match = file.name.match(/(\d{4})_(\d{2})/);
+                const year = match ? parseInt(match[1]) : null;
+                const month = match ? parseInt(match[2]) : null;
+                
+                progressText.textContent = `Restoring from ${file.name}...`;
+                
+                // Now restore from the uploaded file
+                const response = await fetch('/admin/restore/from_csv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: uploadData.filename,
+                        year: year,
+                        month: month
+                    })
+                });
+                
+                const data = await response.json();
+                
+                progressContainer.style.display = 'none';
+                resultsContainer.style.display = 'block';
+                
+                if (data.success) {
+                    document.getElementById('resultTitle').innerHTML = '<i class="fas fa-check-circle text-success"></i> Restore Successful!';
+                    document.getElementById('resultContent').innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>Success!</strong> ${data.message}
+                        </div>
+                        <ul class="list-group">
+                            <li class="list-group-item"><strong>Imported:</strong> ${data.imported} consumption records</li>
+                            <li class="list-group-item"><strong>Deleted:</strong> ${data.deleted} previous records</li>
+                            <li class="list-group-item"><strong>Period:</strong> ${data.period}</li>
+                        </ul>
+                    `;
+                    loadFileList(); // Refresh file list
+                    fileInput.value = ''; // Clear file input
+                } else {
+                    document.getElementById('resultTitle').innerHTML = '<i class="fas fa-times-circle text-danger"></i> Restore Failed';
+                    document.getElementById('resultContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>Error:</strong> ${data.error || 'Unknown error'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                progressContainer.style.display = 'none';
+                resultsContainer.style.display = 'block';
+                document.getElementById('resultTitle').innerHTML = '<i class="fas fa-times-circle text-danger"></i> Restore Failed';
+                document.getElementById('resultContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        });
+        
+        // Load file list on page load
+        loadFileList();
+    </script>
+</body>
+</html>
+

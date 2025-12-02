@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Environment variables (contains PayPal secrets)
+production.env
+*.env
+.env
+
+# Database (we'll include instance/local.db but ignore logs)
+instance/*.log
+instance/*.err.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+
+# Corrupted files
+plitlines*
+erscsh*
+
+# Logs
+*.log
+ngrok.log
+
+# Backups (keep CSV backups, but not SQL dumps with secrets)
+*.sql
+*.tar.gz
+*.zip
+
+# Cookies and sensitive data
+cookies.txt
+

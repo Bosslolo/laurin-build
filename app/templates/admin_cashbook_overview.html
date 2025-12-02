@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Cashbook Overview - Laurin Build</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    <style>
+        /* Coffee Theme (Default) */
+        :root {
+            --main-bg: #A4542C;
+            --main-bg-light: #D4A574;
+            --main-box: #F1DEC7;
+            --button-dark: #8B4513;
+            --button-light: #D2691E;
+            --text-dark: #2C1810;
+            --text-light: #FFFFFF;
+            --border-color: #C4A484;
+        }
+        
+        /* Spring Theme */
+        body[data-theme="spring"] {
+            --main-bg: #4A7C59;
+            --main-bg-light: #7BA68A;
+            --main-box: #E8F5E8;
+            --button-dark: #2E7D32;
+            --button-light: #66BB6A;
+            --text-dark: #1B5E20;
+            --text-light: #FFFFFF;
+            --border-color: #A5D6A7;
+        }
+        
+        /* Summer Theme */
+        body[data-theme="summer"] {
+            --main-bg: #E65100;
+            --main-bg-light: #FF8A65;
+            --main-box: #FFF3E0;
+            --button-dark: #D84315;
+            --button-light: #FFAB91;
+            --text-dark: #BF360C;
+            --text-light: #FFFFFF;
+            --border-color: #FFCCBC;
+        }
+        
+        /* Autumn Theme */
+        body[data-theme="autumn"] {
+            --main-bg: #D84315;
+            --main-bg-light: #FF7043;
+            --main-box: #FFE0B2;
+            --button-dark: #BF360C;
+            --button-light: #FF8A65;
+            --text-dark: #8D1B00;
+            --text-light: #FFFFFF;
+            --border-color: #FFAB91;
+        }
+        
+        /* Winter Theme */
+        body[data-theme="winter"] {
+            --main-bg: #1976D2;
+            --main-bg-light: #42A5F5;
+            --main-box: #E3F2FD;
+            --button-dark: #0D47A1;
+            --button-light: #90CAF9;
+            --text-dark: #1565C0;
+            --text-light: #FFFFFF;
+            --border-color: #BBDEFB;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--main-bg) 0%, var(--main-bg-light) 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .overview-container {
+            background: var(--main-box);
+            border-radius: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--border-color);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1400px;
+        }
+        
+        .overview-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--button-dark);
+        }
+        
+        .overview-title {
+            color: var(--text-dark);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .overview-subtitle {
+            color: var(--button-dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .company-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--border-color);
+        }
+        
+        .company-header {
+            background: var(--button-dark);
+            color: var(--text-light);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-card {
+            background: var(--main-box);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            border: 2px solid var(--border-color);
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--button-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+        
+        .recent-entries {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .recent-entries h6 {
+            color: var(--button-dark);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .entry-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .entry-item:last-child {
+            border-bottom: none;
+        }
+        
+        .entry-date {
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+        
+        .entry-description {
+            font-weight: 600;
+            color: var(--button-dark);
+        }
+        
+        .entry-amount {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .positive {
+            color: #28a745;
+        }
+        
+        .negative {
+            color: #dc3545;
+        }
+        
+        .action-buttons {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        
+        .btn-custom {
+            background: var(--button-dark);
+            border: none;
+            color: var(--text-light);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            color: var(--text-light);
+            background: var(--button-light);
+        }
+        
+        .btn-outline-custom {
+            background: transparent;
+            border: 2px solid var(--button-dark);
+            color: var(--button-dark);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-custom:hover {
+            background: var(--button-dark);
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body data-theme="{{ theme }}" class="theme-{{ theme }}">
+    <div class="container">
+        <div class="overview-container">
+            <div class="overview-header">
+                <h1 class="overview-title">
+                    <i class="fas fa-chart-line"></i> Cashbook Overview
+                </h1>
+                <p class="overview-subtitle">Financial summary for all companies</p>
+            </div>
+            
+            {% for company, stats in company_stats.items() %}
+            <div class="company-card">
+                <div class="company-header">
+                    <i class="fas fa-building"></i> {{ company }}
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">€{{ "%.2f"|format(stats.current_balance) }}</div>
+                        <div class="stat-label">Current Balance</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ stats.total_entries }}</div>
+                        <div class="stat-label">Total Entries</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ stats.week_entries }}</div>
+                        <div class="stat-label">This Week</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ stats.month_entries }}</div>
+                        <div class="stat-label">This Month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number positive">€{{ "%.2f"|format(stats.total_income) }}</div>
+                        <div class="stat-label">Total Income</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number negative">€{{ "%.2f"|format(stats.total_expenses) }}</div>
+                        <div class="stat-label">Total Expenses</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number {% if stats.net_profit >= 0 %}positive{% else %}negative{% endif %}">
+                            €{{ "%.2f"|format(stats.net_profit) }}
+                        </div>
+                        <div class="stat-label">Net Profit</div>
+                    </div>
+                </div>
+                
+                {% if stats.recent_entries %}
+                <div class="recent-entries">
+                    <h6><i class="fas fa-history"></i> Recent Entries</h6>
+                    {% for entry in stats.recent_entries %}
+                    <div class="entry-item">
+                        <div>
+                            <div class="entry-date">{{ entry.entry_date.strftime('%d.%m.%Y') }}</div>
+                            <div class="entry-description">{{ entry.posten }}</div>
+                        </div>
+                        <div class="entry-amount">
+                            {% if entry.einnahmen_bar_cents > 0 %}
+                                <span class="positive">+€{{ "%.2f"|format(entry.einnahmen_bar_cents / 100) }}</span>
+                            {% elif entry.ausgaben_bar_cents > 0 %}
+                                <span class="negative">-€{{ "%.2f"|format(entry.ausgaben_bar_cents / 100) }}</span>
+                            {% else %}
+                                €0.00
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <div class="action-buttons">
+                <a href="{{ url_for('routes.admin_cashbook') }}" class="btn-custom">
+                    <i class="fas fa-book"></i> Manage Cashbook
+                </a>
+                <a href="{{ url_for('routes.admin_cashbook', company='Schülerfirma') }}" class="btn-outline-custom">
+                    <i class="fas fa-graduation-cap"></i> Schülerfirma
+                </a>
+                <a href="{{ url_for('routes.admin_cashbook', company='Pausenverkauf') }}" class="btn-outline-custom">
+                    <i class="fas fa-coffee"></i> Pausenverkauf
+                </a>
+                <a href="{{ url_for('routes.index') }}" class="btn-outline-custom">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main/theme.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/main/theme_switcher.js') }}" defer></script>
+</body>
+</html>

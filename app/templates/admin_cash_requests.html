@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barzahlungs-Anfragen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    <style>
+        body.cash-requests-body {
+            background: linear-gradient(135deg, var(--main-bg) 0%, var(--main-bg-light) 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+        .cash-requests-bg {
+            background: rgba(255, 255, 255, 0.05);
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+        .cash-requests-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--button-light);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .card {
+            border: 2px solid var(--border-color);
+            border-radius: 18px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+        }
+        .card-body {
+            background: var(--main-box);
+            border-radius: 18px;
+        }
+        .table {
+            color: var(--text-dark);
+        }
+        .table thead {
+            background-color: var(--button-dark);
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body data-theme="{{ theme }}" class="cash-requests-body">
+<div class="cash-requests-bg">
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <div class="cash-requests-icon">
+                <i class="fas fa-hand-holding-euro"></i>
+            </div>
+            <div>
+                <h3 class="mb-0">Barzahlungs-Anfragen</h3>
+                <small class="text-muted">Wer wartet noch auf Bargeld?</small>
+            </div>
+        </div>
+        <a class="btn btn-outline-light" href="{{ url_for('routes.admin_cashbook') }}">
+            <i class="fas fa-arrow-left me-1"></i> Zurück zum Cashbook
+        </a>
+    </div>
+
+    {% if pending_requests %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-hand-holding-euro me-2 text-warning"></i>
+                    Offene Anfragen
+                </h5>
+                <div class="badge bg-warning text-dark">Noch {{ pending_requests|length }} offen</div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Nutzer</th>
+                            <th>Betrag</th>
+                            <th>Seit</th>
+                            <th>Notiz</th>
+                            <th class="text-end">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in pending_requests %}
+                        <tr>
+                            <td>{{ req.user.first_name }} {{ req.user.last_name }}</td>
+                            <td>{{ '%.2f' % (req.amount_cents / 100.0) }} €</td>
+                            <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td>{{ req.note or '' }}</td>
+                            <td class="text-end">
+                                <form method="post" action="{{ url_for('routes.admin_resolve_cash_request', request_id=req.id, company='Schülerfirma') }}" class="d-inline">
+                                    <input type="hidden" name="action" value="collect">
+                                    <button class="btn btn-success btn-sm" type="submit">
+                                        <i class="fas fa-check me-1"></i> Eingesammelt
+                                    </button>
+                                </form>
+                                <form method="post" action="{{ url_for('routes.admin_resolve_cash_request', request_id=req.id, company='Schülerfirma') }}" class="d-inline">
+                                    <input type="hidden" name="action" value="cancel">
+                                    <button class="btn btn-outline-danger btn-sm" type="submit">
+                                        <i class="fas fa-times me-1"></i> Abbrechen
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-success mb-4">
+        <i class="fas fa-check-circle me-2"></i>
+        Derzeit liegen keine offenen Barzahlungs-Anfragen vor.
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title mb-3">
+                <i class="fas fa-history me-2 text-muted"></i>
+                Zuletzt bearbeitet
+            </h5>
+            {% if recent_requests %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Nutzer</th>
+                            <th>Betrag</th>
+                            <th>Status</th>
+                            <th>Bearbeitet von</th>
+                            <th>Datum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in recent_requests %}
+                        <tr>
+                            <td>{{ req.user.first_name }} {{ req.user.last_name }}</td>
+                            <td>{{ '%.2f' % (req.amount_cents / 100.0) }} €</td>
+                            <td>
+                                {% if req.status == 'collected' %}
+                                    <span class="badge bg-success">eingesammelt</span>
+                                {% elif req.status == 'cancelled' %}
+                                    <span class="badge bg-secondary">abgebrochen</span>
+                                {% else %}
+                                    <span class="badge bg-info">{{ req.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ req.resolved_by or '-' }}</td>
+                            <td>{{ (req.resolved_at or req.updated_at).strftime('%d.%m.%Y %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">Noch keine bearbeiteten Anfragen.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</div>
+</body>
+</html>
+

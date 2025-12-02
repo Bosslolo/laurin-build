@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>{{ user.first_name }} {{ user.last_name }}</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kaffeeliste">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="{{ theme_color|default('#222222') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- External CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}?v={{ theme_version }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/entries.css') }}?v={{ theme_version }}" rel="stylesheet">
+</head>
+<body data-theme="{{ theme|default('coffee') }}" class="theme-{{ theme|default('coffee') }}">
+<script>
+if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/static/js/sw.js').catch(console.error); }
+window.addEventListener('load', function(){ setTimeout(function(){ window.scrollTo(0,1); }, 300); });
+</script>
+    
+    <div class="app-background">
+    <div class="app-container">
+        <div class="main-container">
+            <!-- List with all beverages. To add and remove beverages and a count to already consumed beverages. -->
+            <!-- Beverage_name price-single, count, add button - field - remove button -->
+            <!-- Can only remove just added beverages and not the ones that were already consumed. -->
+            <!-- At the bottom a button to confirm the order and a button to cancel the order.
+             If pressed the order is confirmed and the page is redirected to the index page.
+             Beverages are now written to the database fixed and added to the invoice.
+             If first beverage consumption of month:
+             1. invoice created for current month
+             2. beverage added to invoice of current month
+             else:
+             1. beverage added to invoice of current month -->
+
+            <!-- User Info Section - Centered Layout -->
+            <div class="user-info-section">
+                <div class="user-info-container">
+                    <!-- User Name - Centered at top -->
+                    <h2 class="user-name">{{ user.first_name }} {{ user.last_name }}</h2>
+                    
+                    <!-- User Role - Centered below name -->
+                    <div class="user-role">{{ user.role.name if user.role else 'No Role' }}</div>
+                    
+                    <!-- PIN Management - Positioned appropriately -->
+                    {% if user.id == 0 %}
+                    <!-- Guest user - no PIN management -->
+                    {% elif user.pin_hash %}
+                    <!-- User with PIN - change PIN button on the right -->
+                    <div class="pin-actions">
+                        <button id="changePinBtn" class="change-pin-button" title="Change PIN">
+                            <i class="fas fa-key"></i>
+                            Change PIN
+                        </button>
+                    </div>
+                    {% elif user.role_id in [4, 5] %}
+                    <!-- Users with role 4 or 5 - show Help button instead of Create PIN -->
+                    <div class="pin-actions">
+                        <button id="helpBtn" class="help-button">
+                            <i class="fas fa-question-circle"></i>
+                            Help
+                        </button>
+                    </div>
+                    {% else %}
+                    <!-- User without PIN - create PIN button centered -->
+                    <div class="pin-actions">
+                        <button id="createPinBtn" class="create-pin-button">
+                            <i class="fas fa-plus"></i>
+                            Create PIN
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Selection Interface Container -->
+            <div class="selection-container">
+                <!-- Beverage Selection Section -->
+                <div class="beverage-section">
+                    <h3 class="beverage-section-title">
+                        <i class="fas fa-coffee"></i>
+                        Getränkeauswahl
+                    </h3>
+                    
+                    <div class="beverage-grid">
+                        {% for beverage in beverages %}
+                            {% if beverage.category == 'drink' %}
+                                {% set price_info = price_lookup.get(beverage.id) %}
+                                <div class="beverage-card" data-beverage-id="{{ beverage.id }}">
+                                    <div class="beverage-header">
+                                        <h4 class="beverage-name">{{ beverage.name }}</h4>
+                                        {% if price_info %}
+                                            <span class="beverage-price">{{ "%.2f"|format(price_info.price_cents / 100) }} €</span>
+                                        {% else %}
+                                            <span class="beverage-price text-warning">No price set</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="beverage-controls">
+                                        <div class="controls-row">
+                                            <div class="quantity-controls">
+                                                {% if price_info %}
+                                                    <button class="quantity-btn decrease-btn" data-action="decrease" title="Decrease by 1">
+                                                        <i class="fas fa-minus"></i>
+                                                    </button>
+                                                    <span class="quantity-display">0</span>
+                                                    <button class="quantity-btn increase-btn" data-action="increase" title="Increase by 1">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                    
+                                                {% else %}
+                                                    <button class="quantity-btn decrease-btn" disabled title="No price set for this item">
+                                                        <i class="fas fa-minus"></i>
+                                                    </button>
+                                                    <span class="quantity-display">0</span>
+                                                    <button class="quantity-btn increase-btn" disabled title="No price set for this item">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                    
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="consumed-info">
+                                                <span class="consumed-count">0</span>
+                                                <small class="consumed-label">consumed</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- Payment Section -->
+            <div class="payment-section" id="paymentSection" style="display: none;">
+                <div class="payment-header">
+                    <h3 class="payment-title">
+                        <i class="fas fa-credit-card"></i>
+                        Zahlungsübersicht
+                    </h3>
+                    <div class="payment-amount">
+                        <span class="amount-label">Gesamtbetrag:</span>
+                        <span class="amount-value" id="totalAmount">€0.00</span>
+                    </div>
+                </div>
+                
+                <div class="payment-details" id="paymentDetails">
+                    <!-- Payment details will be populated here -->
+                </div>
+
+                <div class="alert alert-warning d-flex align-items-center gap-2" id="pendingPayPalNotice" style="display: none;">
+                    <i class="fab fa-paypal"></i>
+                    <div>
+                        <strong>PayPal pending</strong>
+                        <div id="pendingPayPalText" class="small text-muted"></div>
+                    </div>
+                </div>
+                
+                <div class="payment-actions">
+                    <div class="payment-method-selection mb-3" style="display: none;">
+                        <h6>💳 Payment Options Available:</h6>
+                        <div class="btn-group" role="group" aria-label="Payment methods">
+                            <input type="radio" class="btn-check" name="paymentMethod" id="paypalMethod" value="paypal" checked>
+                            <label class="btn btn-outline-success" for="paypalMethod">
+                                <i class="fab fa-paypal"></i>
+                                PayPal QR Code
+                            </label>
+                        </div>
+                        <div class="payment-info mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i>
+                                Both payment methods will be prepared simultaneously for your convenience
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-buttons">
+                        <button class="btn btn-success btn-lg" id="generatePayPalBtn">
+                            <i class="fab fa-paypal"></i>
+                            Generate PayPal QR Code
+                        </button>
+                        <button class="btn btn-warning btn-lg" id="cashRequestBtn">
+                            <i class="fas fa-hand-holding-euro"></i>
+                            Bar bezahlen
+                        </button>
+                        <button class="btn btn-dark btn-lg" id="revolutPayBtn">
+                            <i class="fas fa-mobile-screen-button"></i>
+                            Pay with Revolut (Coming Soon)
+                        </button>
+                        <button class="btn btn-info btn-lg" id="generateReceiptBtn" style="display: none;">
+                            <i class="fas fa-receipt"></i>
+                            Get Receipt
+                        </button>
+                        <button class="btn btn-secondary" id="closePaymentBtn">
+                            <i class="fas fa-times"></i>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons-section">
+                {% if not payment_button_hidden %}
+                <button class="btn btn-warning btn-lg" id="paymentBtn">
+                    <i class="fas fa-credit-card"></i>
+                    View Payment
+                </button>
+                {% endif %}
+                <button class="btn btn-primary btn-lg done-btn" id="doneBtn">
+                    <i class="fas fa-check"></i>
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">
+                        <i class="fas fa-shopping-cart"></i>
+                        Confirm Order
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="order-summary-modal">
+                        <div class="order-summary-header">
+                            <div class="order-summary-icon">
+                                <i class="fas fa-mug-hot"></i>
+                            </div>
+                            <div class="order-summary-text">
+                                <h6 class="order-summary-title">Order Summary</h6>
+                                <p class="order-summary-subtitle">Review your selection before confirming.</p>
+                            </div>
+                        </div>
+                        <div id="modalOrderItems" class="modal-order-items"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-success" id="confirmOrderBtn">
+                        <i class="fas fa-check"></i>
+                        Confirm Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- PayPal QR Code Modal -->
+    <div class="modal fade" id="paypalModal" tabindex="-1" aria-labelledby="paypalModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paypalModalLabel">
+                        <i class="fab fa-paypal"></i>
+                        Scan QR Code with Your Phone
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="paypal-payment-info">
+                        <h6 id="paypalDescription">Payment for CSH Coffee</h6>
+                        <div class="paypal-amount">
+                            <span class="amount-label">Amount:</span>
+                            <span class="amount-value" id="paypalAmount">€0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="qr-code-container">
+                        <div id="paypalQRCode" class="qr-code-placeholder">
+                            <i class="fas fa-qrcode fa-3x text-muted"></i>
+                            <p class="mt-2">QR Code will appear here</p>
+                        </div>
+                    </div>
+                    
+                    <div class="paypal-actions mt-3">
+                        <button type="button" class="btn btn-info" id="getReceiptBtn" style="display: none;">
+                            <i class="fas fa-receipt"></i>
+                            Get Receipt
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times"></i>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- PIN Creation Overlay -->
+    <div id="pinOverlay" class="pin-overlay" style="display: none;">
+        <div class="pin-modal">
+            <div class="pin-header">
+                <h4><i class="fas fa-key"></i> Create PIN</h4>
+                <p id="pinUserInfo">Please enter a new PIN for {{ user.first_name }} {{ user.last_name }}</p>
+            </div>
+            <div class="pin-body">
+                <div class="pin-input-container">
+                    <input type="password" id="pinInput" class="pin-input" placeholder="Enter 4-digit PIN" maxlength="4" autocomplete="off" pattern="[0-9]{4}">
+                    <button type="button" id="pinSubmit" class="pin-submit-btn">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+                <div id="pinError" class="pin-error" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Error creating PIN. Please try again.</span>
+                </div>
+                <div class="pin-actions">
+                    <button type="button" id="pinCancel" class="pin-cancel-btn">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pass backend data to JavaScript -->
+    <script>
+        // Pass consumptions data to JavaScript
+        window.consumptionsData = {{ consumptions | tojson }};
+        window.userData = {{ user_data | tojson }};
+        window.userId = {{ user.id }};
+    </script>
+    
+    <!-- External JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/entries.js') }}?v={{ theme_version }}"></script>
+    
+    <!-- Advanced Theme System (Server-Driven) -->
+    <script src="{{ url_for('static', filename='js/main/theme.js') }}?v={{ theme_version }}" defer></script>
+
+    <script>
+    (function(){
+        let lastTouchEnd = 0;
+        const preventMultiTouch = (event) => {
+            if (event.touches && event.touches.length > 1) {
+                event.preventDefault();
+            }
+        };
+        document.addEventListener('touchstart', preventMultiTouch, { passive: false });
+        document.addEventListener('touchmove', preventMultiTouch, { passive: false });
+        document.addEventListener('touchend', function(event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 350) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, { passive: false });
+        ['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
+            document.addEventListener(evt, function(event){
+                event.preventDefault();
+            }, { passive: false });
+        });
+    })();
+    </script>
+
+    <script>
+    (function () {
+        const homeUrl = "{{ url_for('routes.index') }}";
+        if (window.history && window.history.pushState) {
+            window.history.pushState({ guard: true }, document.title, window.location.href);
+            window.addEventListener('popstate', function () {
+                window.location.replace(homeUrl);
+            });
+        }
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                window.location.replace(homeUrl);
+            }
+        });
+    })();
+    </script>
+</body>
+</html>

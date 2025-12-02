@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Cashbook Verwaltung</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    <style>
+        /* Coffee Theme (Default) */
+        :root {
+            --main-bg: #A4542C;
+            --main-bg-light: #D4A574;
+            --main-box: #F1DEC7;
+            --button-dark: #8B4513;
+            --button-light: #D2691E;
+            --text-dark: #2C1810;
+            --text-light: #FFFFFF;
+            --border-color: #C4A484;
+        }
+        
+        /* Spring Theme */
+        body[data-theme="spring"] {
+            --main-bg: #4A7C59;
+            --main-bg-light: #7BA68A;
+            --main-box: #E8F5E8;
+            --button-dark: #2E7D32;
+            --button-light: #66BB6A;
+            --text-dark: #1B5E20;
+            --text-light: #FFFFFF;
+            --border-color: #A5D6A7;
+        }
+        
+        /* Summer Theme */
+        body[data-theme="summer"] {
+            --main-bg: #E65100;
+            --main-bg-light: #FF8A65;
+            --main-box: #FFF3E0;
+            --button-dark: #D84315;
+            --button-light: #FFAB91;
+            --text-dark: #BF360C;
+            --text-light: #FFFFFF;
+            --border-color: #FFCCBC;
+        }
+        
+        /* Autumn Theme */
+        body[data-theme="autumn"] {
+            --main-bg: #D84315;
+            --main-bg-light: #FF7043;
+            --main-box: #FBE9E7;
+            --button-dark: #BF360C;
+            --button-light: #FFAB91;
+            --text-dark: #8D1B00;
+            --text-light: #FFFFFF;
+            --border-color: #FFAB91;
+        }
+        
+        /* Winter Theme */
+        body[data-theme="winter"] {
+            --main-bg: #1565C0;
+            --main-bg-light: #42A5F5;
+            --main-box: #E3F2FD;
+            --button-dark: #0D47A1;
+            --button-light: #90CAF9;
+            --text-dark: #0D47A1;
+            --text-light: #FFFFFF;
+            --border-color: #BBDEFB;
+        }
+        
+        /* Base Styles */
+        body {
+            background: linear-gradient(135deg, var(--main-bg) 0%, var(--main-bg-light) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background-color: var(--main-box);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 30px;
+        }
+        
+        .card {
+            background-color: var(--main-box);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Button Styles */
+        .btn-primary {
+            background-color: var(--button-dark);
+            border-color: var(--button-dark);
+            color: var(--text-light);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--button-light);
+            border-color: var(--button-light);
+            color: var(--text-dark);
+        }
+        
+        .btn-secondary {
+            background-color: var(--button-light);
+            border-color: var(--button-light);
+            color: var(--text-dark);
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--button-dark);
+            border-color: var(--button-dark);
+            color: var(--text-light);
+        }
+        
+        .btn-outline-primary {
+            color: var(--button-dark);
+            border-color: var(--button-dark);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--button-dark);
+            border-color: var(--button-dark);
+            color: var(--text-light);
+        }
+        
+        .btn-outline-secondary {
+            color: var(--button-light);
+            border-color: var(--button-light);
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: var(--button-light);
+            border-color: var(--button-light);
+            color: var(--text-dark);
+        }
+        
+        /* Form Styles */
+        .form-control {
+            background-color: var(--main-box);
+            border-color: var(--border-color);
+            color: var(--text-dark);
+        }
+        
+        .form-control:focus {
+            border-color: var(--button-dark);
+            box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+            background-color: var(--main-box);
+        }
+        
+        .form-select {
+            background-color: var(--main-box);
+            border-color: var(--border-color);
+            color: var(--text-dark);
+        }
+        
+        .form-select:focus {
+            border-color: var(--button-dark);
+            box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+        }
+        
+        /* Table Styles */
+        .table {
+            color: var(--text-dark);
+            background-color: var(--main-box);
+        }
+        
+        .table-striped > tbody > tr:nth-of-type(odd) > td {
+            background-color: rgba(139, 69, 19, 0.05);
+        }
+        
+        .table th {
+            background-color: var(--button-dark);
+            color: var(--text-light);
+            border-color: var(--border-color);
+        }
+        
+        .table td {
+            border-color: var(--border-color);
+        }
+        
+        /* Badge Styles */
+        .badge.bg-info {
+            background-color: var(--button-dark) !important;
+            color: var(--text-light);
+        }
+        
+        /* Alert Styles */
+        .alert {
+            background-color: var(--main-box);
+            border-color: var(--border-color);
+            color: var(--text-dark);
+        }
+        
+        .alert-success {
+            background-color: var(--main-box);
+            border-color: var(--button-light);
+            color: var(--text-dark);
+        }
+        
+        .alert-danger {
+            background-color: var(--main-box);
+            border-color: #dc3545;
+            color: var(--text-dark);
+        }
+        
+        /* Modal Styles */
+        .modal-content {
+            background-color: var(--main-box);
+            border: 2px solid var(--border-color);
+        }
+        
+        .modal-header {
+            background-color: var(--button-dark);
+            color: var(--text-light);
+            border-bottom-color: var(--border-color);
+        }
+        
+        .modal-footer {
+            background-color: var(--main-box);
+            border-top-color: var(--border-color);
+        }
+        
+        .modal-body {
+            background-color: var(--main-box);
+            color: var(--text-dark);
+        }
+        
+        /* Label Styles */
+        .form-label {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+        
+        /* H3 Styles */
+        h3 {
+            color: var(--text-dark);
+        }
+        
+        h5 {
+            color: var(--text-dark);
+        }
+    </style>
+</head>
+<body data-theme="{{ theme }}">
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Cashbook – {{ company }}</h3>
+        <div class="d-flex gap-2 flex-wrap justify-content-end">
+            <a class="btn btn-outline-primary" href="{{ url_for('routes.admin_cashbook_cash_requests') }}">
+                <i class="fas fa-hand-holding-euro me-1"></i> Bar-Anfragen
+            </a>
+            <form class="d-flex" method="get" action="{{ url_for('routes.admin_cashbook') }}">
+                <select class="form-select me-2" name="company" onchange="this.form.submit()">
+                    {% for opt in company_options %}
+                    <option value="{{ opt }}" {% if opt == company %}selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                </select>
+                <a class="btn btn-secondary" href="{{ url_for('routes.index') }}">Zurück</a>
+            </form>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'warning' if category == 'error' else category }} mb-2">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% if pending_cash_requests %}
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-hand-holding-euro text-warning me-2"></i>
+                    Offene Barzahlungs-Anfragen
+                </h5>
+                <a class="btn btn-outline-primary btn-sm" href="{{ url_for('routes.admin_cashbook_cash_requests') }}">
+                    Alle anzeigen
+                </a>
+            </div>
+            <div class="table-responsive mt-3">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nutzer</th>
+                            <th>Betrag</th>
+                            <th>Seit</th>
+                            <th class="text-end">Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in pending_cash_requests[:4] %}
+                        <tr>
+                            <td>{{ req.user.first_name }} {{ req.user.last_name }}</td>
+                            <td>{{ '%.2f' % (req.amount_cents / 100.0) }} €</td>
+                            <td>{{ req.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td class="text-end">
+                                <form method="post" action="{{ url_for('routes.admin_resolve_cash_request', request_id=req.id, company=company) }}" class="d-inline">
+                                    <input type="hidden" name="action" value="collect">
+                                    <button class="btn btn-success btn-sm" type="submit">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if pending_cash_requests|length > 4 %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                Weitere {{ pending_cash_requests|length - 4 }} Anfragen auf der Übersichtsseite.
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Neuen Buchungssatz hinzufügen</h5>
+            <form method="post" action="{{ url_for('routes.admin_cashbook_add') }}" class="row g-3">
+                <input type="hidden" name="company" value="{{ company }}">
+
+                <div class="col-md-2">
+                    <label class="form-label">Beleg Nummer</label>
+                    <input type="number" class="form-control" name="beleg_nummer" min="1" step="1" value="{{ next_beleg }}" placeholder="{{ next_beleg }}">
+                    <small class="text-muted">Leer lassen für automatisch</small>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Datum</label>
+                    <input type="date" class="form-control" name="entry_date" placeholder="Heute (leer lassen)">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Posten</label>
+                    <input type="text" class="form-control" name="posten" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Bemerkung</label>
+                    <input type="text" class="form-control" name="bemerkung">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Einnahmen bar (€)</label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="einnahmen_bar" value="0">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Ausgaben bar (€)</label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="ausgaben_bar" value="0">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Kassenstand bar (€)</label>
+                    <input type="text" class="form-control" value="{{ '%.2f' % current_kassenstand }}" disabled>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" type="submit"><i class="fa fa-plus me-1"></i> Hinzufügen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Letzte Buchungen</h5>
+            <div class="table-responsive">
+                <table class="table table-striped table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Beleg</th>
+                            <th>Datum</th>
+                            <th>Posten</th>
+                            <th>Bemerkung</th>
+                            <th class="text-end">Einnahmen (€)</th>
+                            <th class="text-end">Ausgaben (€)</th>
+                            <th class="text-end">Kassenstand (€)</th>
+                            <th>Erstellt von</th>
+                            <th>Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in entries %}
+                        <tr>
+                            <td>{{ e.beleg_nummer }}</td>
+                            <td>{{ e.entry_date.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ e.posten }}</td>
+                            <td>{{ e.bemerkung or '' }}</td>
+                            <td class="text-end">{{ '%.2f' % (e.einnahmen_bar_cents / 100.0) }}</td>
+                            <td class="text-end">{{ '%.2f' % (e.ausgaben_bar_cents / 100.0) }}</td>
+                            <td class="text-end">{{ '%.2f' % (e.kassenstand_bar_cents / 100.0) }}</td>
+                            <td><span class="badge bg-info">{{ e.created_by or 'Admin' }}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="editEntry({{ e.id }})" title="Edit Entry">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteEntry({{ e.id }})" title="Delete Entry">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="9" class="text-center text-muted">Noch keine Einträge</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Entry Modal -->
+<div class="modal fade" id="editEntryModal" tabindex="-1" aria-labelledby="editEntryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editEntryModalLabel">Edit Entry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editEntryForm">
+                    <input type="hidden" id="editEntryId" name="entry_id">
+                    <input type="hidden" name="company" value="{{ company }}">
+                    
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Beleg Nummer</label>
+                            <input type="text" class="form-control" id="editBelegNummer" disabled>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Datum</label>
+                            <input type="date" class="form-control" id="editEntryDate" name="entry_date" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Posten</label>
+                            <input type="text" class="form-control" id="editPosten" name="posten" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Bemerkung</label>
+                            <input type="text" class="form-control" id="editBemerkung" name="bemerkung">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Einnahmen (€)</label>
+                            <input type="number" step="0.01" class="form-control" id="editEinnahmen" name="einnahmen_bar_eur" placeholder="0.00">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ausgaben (€)</label>
+                            <input type="number" step="0.01" class="form-control" id="editAusgaben" name="ausgaben_bar_eur" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div id="editEntryAlert" class="alert mt-3" style="display:none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Edit entry functionality
+function editEntry(entryId) {
+    // Fetch entry data and populate form
+    fetch(`/admin/cashbook/get_entry/${entryId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('editEntryId').value = data.entry.id;
+                document.getElementById('editBelegNummer').value = data.entry.beleg_nummer;
+                document.getElementById('editEntryDate').value = data.entry.entry_date;
+                document.getElementById('editPosten').value = data.entry.posten;
+                document.getElementById('editBemerkung').value = data.entry.bemerkung || '';
+                document.getElementById('editEinnahmen').value = (data.entry.einnahmen_bar_cents / 100).toFixed(2);
+                document.getElementById('editAusgaben').value = (data.entry.ausgaben_bar_cents / 100).toFixed(2);
+                
+                const modal = new bootstrap.Modal(document.getElementById('editEntryModal'));
+                modal.show();
+            } else {
+                alert('Error loading entry: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Network error loading entry');
+        });
+}
+
+// Save edited entry
+document.getElementById('saveEditBtn').addEventListener('click', function() {
+    const form = document.getElementById('editEntryForm');
+    const formData = new FormData(form);
+    const entryId = document.getElementById('editEntryId').value;
+    
+    fetch(`/admin/cashbook/edit_entry/${entryId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Reload to show changes
+        } else {
+            const alertBox = document.getElementById('editEntryAlert');
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = data.error || 'Error saving entry';
+            alertBox.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const alertBox = document.getElementById('editEntryAlert');
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = 'Network error saving entry';
+        alertBox.style.display = 'block';
+    });
+});
+
+// Delete entry functionality
+function deleteEntry(entryId) {
+    if (confirm('Are you sure you want to delete this entry? This action cannot be undone.')) {
+        fetch(`/admin/cashbook/delete_entry/${entryId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Reload to show changes
+            } else {
+                alert('Error deleting entry: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Network error deleting entry');
+        });
+    }
+}
+
+</script>
+</body>
+</html>
+
+

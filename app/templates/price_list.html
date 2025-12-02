@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <title>Price List - Laurin Build</title>
+    <meta name="theme-color" content="{{ theme_color|default('#222222') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    <style>
+        /* Comprehensive Theme System for Price List */
+        body {
+            /* Default coffee theme variables */
+            --main-bg: #A4542C;
+            --main-bg-light: #D2691E;
+            --main-box: #F1DEC7;
+            --button-dark: #8B4513;
+            --button-light: #DEB887;
+            --text-dark: #2E2E2E;
+            --text-light: #FFFFFF;
+            --border-color: rgba(139, 69, 19, 0.2);
+            
+            background: linear-gradient(135deg, var(--main-bg) 0%, var(--main-bg-light) 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Spring Theme */
+        body[data-theme="spring"] {
+            --main-bg: #4CAF50 !important;
+            --main-bg-light: #66BB6A !important;
+            --main-box: #C8E6C9 !important;
+            --button-dark: #2E7D32 !important;
+            --button-light: #AED581 !important;
+            --text-dark: #1B5E20 !important;
+            --text-light: #FFFFFF !important;
+            --border-color: rgba(76, 175, 80, 0.2) !important;
+        }
+        
+        /* Summer Theme */
+        body[data-theme="summer"] {
+            --main-bg: #FF9800 !important;
+            --main-bg-light: #FFB74D !important;
+            --main-box: #FFECB3 !important;
+            --button-dark: #E65100 !important;
+            --button-light: #FFD54F !important;
+            --text-dark: #BF360C !important;
+            --text-light: #FFFFFF !important;
+            --border-color: rgba(255, 152, 0, 0.2) !important;
+        }
+        
+        /* Autumn Theme */
+        body[data-theme="autumn"] {
+            --main-bg: #FF5722 !important;
+            --main-bg-light: #FF7043 !important;
+            --main-box: #FFCC80 !important;
+            --button-dark: #D84315 !important;
+            --button-light: #FFB74D !important;
+            --text-dark: #BF360C !important;
+            --text-light: #FFFFFF !important;
+            --border-color: rgba(255, 87, 34, 0.2) !important;
+        }
+        
+        /* Winter Theme */
+        body[data-theme="winter"] {
+            --main-bg: #2196F3 !important;
+            --main-bg-light: #42A5F5 !important;
+            --main-box: #BBDEFB !important;
+            --button-dark: #0D47A1 !important;
+            --button-light: #90CAF9 !important;
+            --text-dark: #1565C0 !important;
+            --text-light: #FFFFFF !important;
+            --border-color: rgba(33, 150, 243, 0.2) !important;
+        }
+        
+        .price-list-container {
+            background: var(--main-box);
+            border-radius: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border: 2px solid var(--border-color);
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+        }
+        
+        .price-list-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--button-dark);
+        }
+        
+        .price-list-title {
+            color: var(--text-dark);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .price-list-subtitle {
+            color: var(--button-dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .price-table {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .price-table th {
+            background: var(--button-dark);
+            color: var(--text-light);
+            font-weight: 600;
+            padding: 1rem;
+            border: none;
+        }
+        
+        .price-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        
+        .price-table tbody tr:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        .beverage-name {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .price-cell {
+            text-align: center;
+            font-weight: 600;
+            color: var(--button-dark);
+        }
+        
+        .back-button {
+            background: var(--button-dark);
+            border: none;
+            color: var(--text-light);
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            color: var(--text-light);
+            background: var(--button-light);
+        }
+    </style>
+</head>
+<body data-theme="{{ theme }}" class="theme-{{ theme }}">
+    <div class="container">
+        <div class="price-list-container">
+            <div class="price-list-header">
+                <h1 class="price-list-title">
+                    <i class="fas fa-tags"></i> Price List
+                </h1>
+                <p class="price-list-subtitle">Current prices for all products</p>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table price-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th class="text-center">Price</th>
+                            <th class="text-center">Category</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in price_data %}
+                        <tr>
+                            <td class="beverage-name">
+                                <strong>{{ item.item.name }}</strong>
+                                {% if item.item.description %}
+                                    <br><small class="text-muted">{{ item.item.description }}</small>
+                                {% endif %}
+                            </td>
+                            <td class="price-cell">
+                                €{{ "%.2f"|format(item.price_euros) }}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-{{ 'cake' if item.category == 'food' else 'coffee' if item.category == 'drink' else 'cookie' }}"></i> 
+                                    {{ item.category.title() }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if not price_data %}
+            {% endif %}
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('routes.index') }}" class="back-button">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Main System
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Price List Theme Debug Helper
+        console.log('[PriceList] Page loaded, waiting for theme system to initialize...');
+        
+        // Enable theme debugging
+        window.__THEME_DEBUG = true;
+        
+        // Monitor theme changes
+        let themeChangeCount = 0;
+        const originalSetAttribute = Element.prototype.setAttribute;
+        Element.prototype.setAttribute = function(name, value) {
+            if (name === 'data-theme' && this === document.body) {
+                themeChangeCount++;
+                console.log('[PriceList] Theme change #' + themeChangeCount + ':', value);
+                console.log('[PriceList] Current body classes:', document.body.className);
+            }
+            return originalSetAttribute.call(this, name, value);
+        };
+        
+        // Monitor when theme system applies themes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                    console.log('[PriceList] Theme attribute changed to:', document.body.getAttribute('data-theme'));
+                }
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    console.log('[PriceList] Body classes changed to:', document.body.className);
+                }
+            });
+        });
+        
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['data-theme', 'class']
+        });
+        
+        // Check theme after a delay to see what's happening
+        setTimeout(() => {
+            console.log('[PriceList] Final theme check:');
+            console.log('[PriceList] - data-theme:', document.body.getAttribute('data-theme'));
+            console.log('[PriceList] - classes:', document.body.className);
+        }, 2000);
+    </script>
+    <script src="{{ url_for('static', filename='js/main/theme.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/main/theme_switcher.js') }}" defer></script>
+</body>
+</html>

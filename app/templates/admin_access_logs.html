@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Admin Access Logs - Laurin Build</title>
+    <meta name="theme-color" content="{{ theme_color|default('#222222') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    <style>
+        /* Coffee Theme (Default) */
+        :root {
+            --main-bg: #A4542C;
+            --main-bg-light: #D4A574;
+            --main-box: #F1DEC7;
+            --button-dark: #8B4513;
+            --button-light: #D2691E;
+            --text-dark: #2C1810;
+            --text-light: #FFFFFF;
+            --border-color: #C4A484;
+        }
+        
+        /* Spring Theme */
+        body[data-theme="spring"] {
+            --main-bg: #4A7C59;
+            --main-bg-light: #7BA68A;
+            --main-box: #E8F5E8;
+            --button-dark: #2E7D32;
+            --button-light: #66BB6A;
+            --text-dark: #1B5E20;
+            --text-light: #FFFFFF;
+            --border-color: #A5D6A7;
+        }
+        
+        /* Summer Theme */
+        body[data-theme="summer"] {
+            --main-bg: #E65100;
+            --main-bg-light: #FF8A65;
+            --main-box: #FFF3E0;
+            --button-dark: #D84315;
+            --button-light: #FFAB91;
+            --text-dark: #BF360C;
+            --text-light: #FFFFFF;
+            --border-color: #FFCCBC;
+        }
+        
+        /* Autumn Theme */
+        body[data-theme="autumn"] {
+            --main-bg: #D84315;
+            --main-bg-light: #FF7043;
+            --main-box: #FBE9E7;
+            --button-dark: #BF360C;
+            --button-light: #FFAB91;
+            --text-dark: #8D1B00;
+            --text-light: #FFFFFF;
+            --border-color: #FFAB91;
+        }
+        
+        /* Winter Theme */
+        body[data-theme="winter"] {
+            --main-bg: #1565C0;
+            --main-bg-light: #42A5F5;
+            --main-box: #E3F2FD;
+            --button-dark: #0D47A1;
+            --button-light: #90CAF9;
+            --text-dark: #0D47A1;
+            --text-light: #FFFFFF;
+            --border-color: #BBDEFB;
+        }
+        
+        /* Base Styles */
+        body {
+            background: linear-gradient(135deg, var(--main-bg) 0%, var(--main-bg-light) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        
+        .logs-container {
+            background-color: var(--main-box);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 1200px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .logs-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .logs-title {
+            color: var(--text-dark);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .logs-subtitle {
+            color: var(--text-dark);
+            font-size: 1.1rem;
+        }
+        
+        .log-entry {
+            background-color: var(--main-box);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .log-entry:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .log-entry.failed {
+            border-left: 5px solid #dc3545;
+            background-color: var(--main-box);
+        }
+        
+        .log-entry.success {
+            border-left: 5px solid #28a745;
+            background-color: var(--main-box);
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .log-status {
+            font-weight: 700;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .log-status.success {
+            background-color: var(--button-light);
+            color: var(--text-dark);
+        }
+        
+        .log-status.failed {
+            background-color: #dc3545;
+            color: var(--text-light);
+        }
+        
+        .log-timestamp {
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+        
+        .log-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .log-detail {
+            background-color: var(--main-box);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .log-detail-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .log-detail-value {
+            color: var(--text-dark);
+            word-break: break-all;
+        }
+        
+        .ip-address {
+            font-family: 'Courier New', monospace;
+            background-color: var(--main-box);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .credentials {
+            font-family: 'Courier New', monospace;
+            background-color: var(--button-light);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text-dark);
+        }
+        
+        .no-logs {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dark);
+        }
+        
+        .back-button {
+            background-color: var(--button-dark);
+            color: var(--text-light);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            color: var(--text-dark);
+            background-color: var(--button-light);
+        }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--button-primary);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body data-theme="{{ theme|default('coffee') }}" class="theme-{{ theme|default('coffee') }}">
+    <div class="container">
+        <div class="logs-container">
+            <div class="logs-header">
+                <h1 class="logs-title">
+                    <i class="fas fa-shield-alt me-3"></i>
+                    Admin Access Logs
+                </h1>
+                <p class="logs-subtitle">Monitor all admin login attempts and security events</p>
+            </div>
+            
+            {% if logs %}
+                {% set total_attempts = logs|length %}
+                {% set successful_attempts = logs|selectattr('success')|list|length %}
+                {% set failed_attempts = total_attempts - successful_attempts %}
+                
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-number">{{ total_attempts }}</div>
+                        <div class="stat-label">Total Attempts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ successful_attempts }}</div>
+                        <div class="stat-label">Successful</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">{{ failed_attempts }}</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+                
+                {% for log in logs %}
+                <div class="log-entry {{ 'success' if log.success else 'failed' }}">
+                    <div class="log-header">
+                        <div>
+                            <span class="log-status {{ 'success' if log.success else 'failed' }}">
+                                <i class="fas fa-{{ 'check-circle' if log.success else 'times-circle' }} me-2"></i>
+                                {{ 'SUCCESS' if log.success else 'FAILED' }}
+                            </span>
+                        </div>
+                        <div class="log-timestamp">
+                            <i class="fas fa-clock me-2"></i>
+                            {{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </div>
+                    </div>
+                    
+                    <div class="log-details">
+                        <div class="log-detail">
+                            <div class="log-detail-label">
+                                <i class="fas fa-globe me-2"></i>IP Address
+                            </div>
+                            <div class="log-detail-value">
+                                <span class="ip-address">{{ log.ip_address }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="log-detail">
+                            <div class="log-detail-label">
+                                <i class="fas fa-laptop me-2"></i>Device
+                            </div>
+                            <div class="log-detail-value">{{ log.device_name }}</div>
+                        </div>
+                        
+                        <div class="log-detail">
+                            <div class="log-detail-label">
+                                <i class="fas fa-user me-2"></i>Username Attempted
+                            </div>
+                            <div class="log-detail-value">
+                                <span class="credentials">{{ log.username_attempted or 'N/A' }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="log-detail">
+                            <div class="log-detail-label">
+                                <i class="fas fa-key me-2"></i>Password Attempted
+                            </div>
+                            <div class="log-detail-value">
+                                <span class="credentials">{{ log.password_attempted or 'N/A' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if log.user_agent %}
+                    <div class="log-detail mt-3">
+                        <div class="log-detail-label">
+                            <i class="fas fa-info-circle me-2"></i>User Agent
+                        </div>
+                        <div class="log-detail-value" style="font-size: 0.8rem; color: #6c757d;">
+                            {{ log.user_agent[:100] }}{% if log.user_agent|length > 100 %}...{% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-logs">
+                    <i class="fas fa-shield-alt fa-3x mb-3"></i>
+                    <h4>No Access Logs Yet</h4>
+                    <p>Admin access attempts will appear here once someone tries to log in.</p>
+                </div>
+            {% endif %}
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('routes.index') }}" class="back-button">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Admin Panel
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main/theme.js') }}" defer></script>
+</body>
+</html>

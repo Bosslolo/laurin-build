@@ -1,0 +1,9 @@
+{
+  "name": "Laurin Build",
+  "short_name": "Laurin",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#B65D24",
+  "theme_color": "#B65D24",
+  "icons": []
+}

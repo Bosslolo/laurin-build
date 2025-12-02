@@ -1,0 +1,1721 @@
+/* Modern Dynamic Theme Support for Beverage Selection Page */
+
+/* Base styles with comprehensive CSS variables */
+html {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    background: #140a05;
+}
+
+body {
+    /* Default coffee theme variables */
+    --accent1: #8B4513;
+    --accent2: #D2691E;
+    --accent3: #CD853F;
+    --accent4: #DEB887;
+    --accent5: #F5DEB3;
+    --accent6: #FFF8DC;
+    --accent7: #FFFAF0;
+    --gradient-main: linear-gradient(135deg, #8B4513 0%, #A0522D 15%, #D2691E 30%, #CD853F 45%, #DEB887 60%, #F5DEB3 75%, #FFF8DC 90%, #FFFAF0 100%);
+    --gradient-overlay: radial-gradient(circle at 20% 80%, rgba(255, 140, 0, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 69, 0, 0.12) 0%, transparent 45%),
+                        radial-gradient(circle at 40% 40%, rgba(255, 165, 0, 0.1) 0%, transparent 40%);
+    --container-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 222, 179, 0.8) 30%, rgba(255, 248, 220, 0.95) 70%, rgba(250, 240, 230, 0.9) 100%);
+    --container-shadow: 0 20px 40px rgba(139, 69, 19, 0.2), 0 8px 16px rgba(210, 105, 30, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+    --container-border: 1px solid rgba(139, 69, 19, 0.1);
+    --text-primary: #2E2E2E;
+    --text-secondary: #5D4E37;
+    --text-muted: #8B7355;
+    --button-primary: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+    --button-primary-hover: linear-gradient(135deg, #D2691E 0%, #8B4513 100%);
+    --button-secondary: linear-gradient(135deg, #CD853F 0%, #DEB887 100%);
+    --button-secondary-hover: linear-gradient(135deg, #DEB887 0%, #CD853F 100%);
+    --card-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 222, 179, 0.6) 50%, rgba(255, 248, 220, 0.9) 100%);
+    --card-shadow: 0 8px 16px rgba(139, 69, 19, 0.1), 0 2px 4px rgba(210, 105, 30, 0.05);
+    --card-border: 1px solid rgba(139, 69, 19, 0.1);
+    --success-color: #4CAF50;
+    --warning-color: #FF9800;
+    --danger-color: #F44336;
+    
+    background: var(--gradient-main);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative;
+    overflow-x: hidden;
+    padding: 0;
+    margin: 0;
+    font-size: clamp(15px, 1.4vw, 17px);
+    -webkit-text-size-adjust: 100%;
+}
+
+.app-background {
+    background: var(--gradient-main);
+    min-height: 100vh;
+    padding: 0.5rem 0 1.5rem 0;
+    width: 100%;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 920px;
+    padding: 0 0.75rem 1.25rem;
+    margin: 0 auto;
+}
+
+/* Subtle background overlay */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-overlay);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Main container - Modern glass morphism design */
+.main-container {
+    background: var(--container-bg);
+    border-radius: 24px;
+    box-shadow: var(--container-shadow);
+    backdrop-filter: blur(20px);
+    margin: 0 auto;
+    padding: clamp(1.4rem, 2vw, 1.8rem);
+    border: var(--container-border);
+    position: relative;
+    z-index: 1;
+    width: min(860px, calc(100vw - 2rem));
+    min-height: auto;
+}
+
+@media (max-width: 1100px) {
+    .main-container {
+        width: min(820px, calc(100vw - 1.25rem));
+    }
+}
+
+@media (max-width: 900px) {
+    html {
+        font-size: clamp(14px, 1.6vw, 16px);
+    }
+    .main-container {
+        width: min(760px, calc(100vw - 1rem));
+    }
+}
+
+@media (max-width: 780px) {
+    .main-container {
+        width: min(660px, calc(100vw - 0.75rem));
+    }
+}
+
+/* User Info Section - Clean and centered */
+.user-info-section {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1rem 0;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+}
+
+.user-info-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    max-width: 500px;
+}
+
+.user-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    letter-spacing: -0.5px;
+}
+
+.user-role {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(139, 69, 19, 0.1) 0%, rgba(210, 105, 30, 0.1) 100%);
+    border: 1px solid rgba(139, 69, 19, 0.2);
+    display: inline-block;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.pin-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.change-pin-button, .create-pin-button, .help-button {
+    background: var(--button-secondary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.change-pin-button:hover, .create-pin-button:hover, .help-button:hover {
+    background: var(--button-secondary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Beverage Section - Clean grid layout */
+.beverage-section {
+    margin-bottom: 2rem;
+}
+
+.beverage-section-title {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.beverage-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.beverage-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 0.8rem;
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 120px;
+}
+
+.beverage-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(139, 69, 19, 0.15), 0 2px 4px rgba(210, 105, 30, 0.1);
+}
+
+.beverage-header {
+    margin-bottom: 0.6rem;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.beverage-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.2;
+    flex: 1;
+}
+
+.beverage-price {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent1);
+    background: linear-gradient(135deg, rgba(139, 69, 19, 0.08) 0%, rgba(210, 105, 30, 0.08) 100%);
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid rgba(139, 69, 19, 0.15);
+    white-space: nowrap;
+}
+
+.beverage-controls {
+    margin-bottom: 0.8rem;
+}
+
+.controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.8rem;
+}
+
+.quantity-btn {
+    background: var(--button-primary);
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-btn:hover {
+    background: var(--button-primary-hover);
+    transform: scale(1.1);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.quantity-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.quantity-display {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 2.5rem;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(245, 222, 179, 0.6) 100%);
+    padding: 0.3rem 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(139, 69, 19, 0.15);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+
+.consumed-info {
+    text-align: center;
+    padding: 0.4rem 0.6rem;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(139, 195, 74, 0.1) 100%);
+    border-radius: 6px;
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    min-width: 60px;
+    flex-shrink: 0;
+}
+
+.consumed-count {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--success-color);
+    display: block;
+    line-height: 1;
+}
+
+.consumed-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1;
+}
+
+/* Action Buttons */
+.action-buttons-section {
+    text-align: center;
+    margin-top: 2rem;
+    padding: 1rem 0;
+    background: transparent;
+    border-radius: 0;
+    border: none;
+}
+
+.done-btn {
+    background: var(--button-primary);
+    color: white;
+    border: none;
+    padding: 1rem 2.5rem;
+    border-radius: 25px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 16px rgba(139, 69, 19, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.done-btn:hover {
+    background: var(--button-primary-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(139, 69, 19, 0.4);
+}
+
+.done-btn:active {
+    transform: translateY(-1px);
+}
+
+/* Theme-specific overrides using CSS variables */
+body[data-theme="spring"] {
+    --accent1: #4CAF50;
+    --accent2: #66BB6A;
+    --accent3: #8BC34A;
+    --accent4: #AED581;
+    --accent5: #C8E6C9;
+    --accent6: #DCEDC8;
+    --accent7: #F1F8E9;
+    --gradient-main: linear-gradient(135deg, #4CAF50 0%, #66BB6A 15%, #8BC34A 30%, #AED581 45%, #C8E6C9 60%, #DCEDC8 75%, #F1F8E9 90%, #FFFFFF 100%);
+    --text-primary: #1B5E20;
+    --text-secondary: #2E7D32;
+    --text-muted: #4CAF50;
+    --button-primary: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+    --button-primary-hover: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+    --button-secondary: linear-gradient(135deg, #8BC34A 0%, #AED581 100%);
+    --button-secondary-hover: linear-gradient(135deg, #AED581 0%, #8BC34A 100%);
+    --container-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(200, 230, 201, 0.8) 30%, rgba(174, 213, 129, 0.95) 70%, rgba(255, 255, 255, 0.9) 100%);
+    --container-shadow: 0 20px 40px rgba(76, 175, 80, 0.2), 0 8px 16px rgba(102, 187, 106, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+    --container-border: 2px solid rgba(76, 175, 80, 0.15);
+    --card-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(200, 230, 201, 0.6) 50%, rgba(174, 213, 129, 0.9) 100%);
+    --card-shadow: 0 8px 16px rgba(76, 175, 80, 0.1), 0 2px 4px rgba(102, 187, 106, 0.05);
+    --card-border: 1px solid rgba(76, 175, 80, 0.1);
+}
+
+body[data-theme="summer"] {
+    --accent1: #FF9800;
+    --accent2: #FFB74D;
+    --accent3: #FFC107;
+    --accent4: #FFD54F;
+    --accent5: #FFECB3;
+    --accent6: #FFF3E0;
+    --accent7: #FFF8E1;
+    --gradient-main: linear-gradient(135deg, #FF9800 0%, #FFB74D 15%, #FFC107 30%, #FFD54F 45%, #FFECB3 60%, #FFF3E0 75%, #FFF8E1 90%, #FFFFFF 100%);
+    --text-primary: #E65100;
+    --text-secondary: #F57C00;
+    --text-muted: #FF9800;
+    --button-primary: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+    --button-primary-hover: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
+    --button-secondary: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%);
+    --button-secondary-hover: linear-gradient(135deg, #FFD54F 0%, #FFC107 100%);
+    --container-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 243, 224, 0.8) 30%, rgba(255, 213, 79, 0.95) 70%, rgba(255, 255, 255, 0.9) 100%);
+    --container-shadow: 0 20px 40px rgba(255, 152, 0, 0.2), 0 8px 16px rgba(255, 183, 77, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+    --container-border: 2px solid rgba(255, 152, 0, 0.15);
+    --card-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 243, 224, 0.6) 50%, rgba(255, 213, 79, 0.9) 100%);
+    --card-shadow: 0 8px 16px rgba(255, 152, 0, 0.1), 0 2px 4px rgba(255, 183, 77, 0.05);
+    --card-border: 1px solid rgba(255, 152, 0, 0.1);
+}
+
+body[data-theme="autumn"] {
+    --accent1: #FF5722;
+    --accent2: #FF7043;
+    --accent3: #FF9800;
+    --accent4: #FFB74D;
+    --accent5: #FFCC80;
+    --accent6: #FFE0B2;
+    --accent7: #FFF3E0;
+    --gradient-main: linear-gradient(135deg, #FF5722 0%, #FF7043 15%, #FF9800 30%, #FFB74D 45%, #FFCC80 60%, #FFE0B2 75%, #FFF3E0 90%, #FFFFFF 100%);
+    --text-primary: #BF360C;
+    --text-secondary: #D84315;
+    --text-muted: #FF5722;
+    --button-primary: linear-gradient(135deg, #FF5722 0%, #FF7043 100%);
+    --button-primary-hover: linear-gradient(135deg, #FF7043 0%, #FF5722 100%);
+    --button-secondary: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+    --button-secondary-hover: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
+    --container-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 224, 178, 0.8) 30%, rgba(255, 183, 77, 0.95) 70%, rgba(255, 255, 255, 0.9) 100%);
+    --container-shadow: 0 20px 40px rgba(255, 87, 34, 0.2), 0 8px 16px rgba(255, 112, 67, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+    --container-border: 2px solid rgba(255, 87, 34, 0.15);
+    --card-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 224, 178, 0.6) 50%, rgba(255, 183, 77, 0.9) 100%);
+    --card-shadow: 0 8px 16px rgba(255, 87, 34, 0.1), 0 2px 4px rgba(255, 112, 67, 0.05);
+    --card-border: 1px solid rgba(255, 87, 34, 0.1);
+}
+
+body[data-theme="winter"] {
+    --accent1: #2196F3;
+    --accent2: #42A5F5;
+    --accent3: #64B5F6;
+    --accent4: #90CAF9;
+    --accent5: #BBDEFB;
+    --accent6: #E3F2FD;
+    --accent7: #F3E5F5;
+    --gradient-main: linear-gradient(135deg, #2196F3 0%, #42A5F5 15%, #64B5F6 30%, #90CAF9 45%, #BBDEFB 60%, #E3F2FD 75%, #F3E5F5 90%, #FFFFFF 100%);
+    --text-primary: #0D47A1;
+    --text-secondary: #1565C0;
+    --text-muted: #2196F3;
+    --button-primary: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%);
+    --button-primary-hover: linear-gradient(135deg, #42A5F5 0%, #2196F3 100%);
+    --button-secondary: linear-gradient(135deg, #64B5F6 0%, #90CAF9 100%);
+    --button-secondary-hover: linear-gradient(135deg, #90CAF9 0%, #64B5F6 100%);
+    --container-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(187, 222, 251, 0.8) 30%, rgba(144, 202, 249, 0.95) 70%, rgba(255, 255, 255, 0.9) 100%);
+    --container-shadow: 0 20px 40px rgba(33, 150, 243, 0.2), 0 8px 16px rgba(66, 165, 245, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+    --container-border: 2px solid rgba(33, 150, 243, 0.15);
+    --card-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(187, 222, 251, 0.6) 50%, rgba(144, 202, 249, 0.9) 100%);
+    --card-shadow: 0 8px 16px rgba(33, 150, 243, 0.1), 0 2px 4px rgba(66, 165, 245, 0.05);
+    --card-border: 1px solid rgba(33, 150, 243, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-container {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .user-name {
+        font-size: 1.6rem;
+    }
+    
+    .user-role {
+        font-size: 1rem;
+        padding: 0.3rem 0.8rem;
+    }
+    
+    .beverage-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .beverage-header {
+        flex-direction: column;
+        align-items: flex-start;
+    gap: 0.5rem;
+}
+
+    .beverage-name {
+        font-size: 1.2rem;
+    }
+    
+    .beverage-price {
+    font-size: 1.1rem;
+        padding: 0.3rem 0.8rem;
+    }
+    
+    .beverage-card {
+        padding: 0.6rem;
+        min-height: 90px;
+    }
+    
+    .beverage-section-title {
+        font-size: 1.4rem;
+}
+
+.pin-actions {
+        position: static;
+        justify-content: center;
+    margin-top: 1rem;
+    }
+    
+    .change-pin-button, .create-pin-button, .help-button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    .done-btn {
+        padding: 0.8rem 2rem;
+        font-size: 1.1rem;
+    }
+    
+    .quantity-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 0.7rem;
+    }
+    
+    
+    .controls-row {
+        gap: 0.8rem;
+    }
+    
+    .consumed-info {
+        min-width: 50px;
+        padding: 0.3rem 0.4rem;
+    }
+    
+    .consumed-count {
+        font-size: 0.9rem;
+    }
+    
+    .consumed-label {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-container {
+        margin: 0.5rem;
+        padding: 1rem;
+    }
+    
+    .user-name {
+        font-size: 1.4rem;
+    }
+    
+    .beverage-card {
+        padding: 1rem;
+    }
+    
+    .quantity-controls {
+        gap: 0.8rem;
+    }
+    
+    .controls-row {
+        gap: 0.6rem;
+    }
+    
+    .consumed-info {
+        min-width: 45px;
+        padding: 0.25rem 0.3rem;
+    }
+    
+    .consumed-count {
+        font-size: 0.8rem;
+    }
+    
+    .consumed-label {
+        font-size: 0.6rem;
+    }
+}
+
+/* =========================== */
+/* PIN OVERLAY STYLES */
+/* =========================== */
+
+/* PIN Authentication Overlay Styles */
+.pin-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 9999;
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.pin-modal {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 90%;
+    animation: slideIn 0.3s ease;
+    margin: 0 auto; /* Ensure centering */
+}
+
+.pin-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 20px 20px 0 0;
+    text-align: center;
+}
+
+.pin-header h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.pin-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.pin-body {
+    padding: 2rem;
+}
+
+.pin-input-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.pin-input {
+    flex: 1;
+    padding: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    text-align: center;
+    letter-spacing: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.pin-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.pin-submit-btn {
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 60px;
+}
+
+.pin-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.pin-submit-btn:active {
+    transform: translateY(0);
+}
+
+.pin-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.pin-cancel-btn {
+    padding: 0.8rem 1.5rem;
+    background: transparent;
+    color: #666;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pin-cancel-btn:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
+}
+
+.pin-error {
+    background: #fee;
+    color: #c33;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid #fcc;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Tablet/Phone adjustments for PIN modal */
+@media (max-width: 992px) {
+    .pin-modal {
+        width: min(420px, calc(100vw - 2rem));
+        margin: 0 auto;
+    }
+    
+    .pin-header,
+    .pin-body {
+        padding: 1.5rem;
+    }
+    
+    .pin-input {
+        padding: 1rem;
+        font-size: 1.1rem;
+    }
+    
+    .pin-submit-btn {
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
+    }
+}
+
+
+/* =========================== */
+/* PIN OVERLAY CENTERING FIX */
+/* =========================== */
+
+/* Ensure PIN overlay is properly centered when displayed */
+.pin-overlay[style*="display: flex"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Alternative centering method for PIN modal */
+.pin-overlay .pin-modal {
+    position: relative;
+    margin: 0 auto;
+}
+
+/* =========================== */
+/* PIN MODAL THEME SUPPORT */
+/* =========================== */
+
+/* Coffee Theme (Default) */
+body[data-theme="coffee"] .pin-modal,
+body.theme-coffee .pin-modal {
+    background: linear-gradient(135deg, #f5e6d3 0%, #e8d5c4 100%) !important;
+}
+
+body[data-theme="coffee"] .pin-header,
+body.theme-coffee .pin-header {
+    background: linear-gradient(135deg, #8B4513 0%, #6F3609 100%) !important;
+    color: #f5e6d3 !important;
+}
+
+body[data-theme="coffee"] .pin-input,
+body.theme-coffee .pin-input {
+    background: #f5e6d3 !important;
+    color: #8B4513 !important;
+    border: 2px solid #8B4513 !important;
+}
+
+body[data-theme="coffee"] .pin-input:focus,
+body.theme-coffee .pin-input:focus {
+    border-color: #A0522D !important;
+    box-shadow: 0 0 0 3px rgba(160, 82, 45, 0.1) !important;
+}
+
+body[data-theme="coffee"] .pin-submit-btn,
+body.theme-coffee .pin-submit-btn {
+    background: linear-gradient(135deg, #8B4513 0%, #6F3609 100%) !important;
+    color: #f5e6d3 !important;
+}
+
+body[data-theme="coffee"] .pin-submit-btn:hover,
+body.theme-coffee .pin-submit-btn:hover {
+    background: linear-gradient(135deg, #A0522D 0%, #8B4513 100%) !important;
+    box-shadow: 0 5px 15px rgba(139, 69, 19, 0.4) !important;
+}
+
+body[data-theme="coffee"] .pin-cancel-btn,
+body.theme-coffee .pin-cancel-btn {
+    background: rgba(139, 69, 19, 0.1) !important;
+    color: #8B4513 !important;
+    border: 2px solid #8B4513 !important;
+}
+
+body[data-theme="coffee"] .pin-cancel-btn:hover,
+body.theme-coffee .pin-cancel-btn:hover {
+    background: rgba(139, 69, 19, 0.2) !important;
+    color: #8B4513 !important;
+    border: 2px solid #8B4513 !important;
+}
+
+/* Spring Theme */
+body[data-theme="spring"] .pin-modal,
+body.theme-spring .pin-modal {
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%) !important;
+}
+
+body[data-theme="spring"] .pin-header,
+body.theme-spring .pin-header {
+    background: linear-gradient(135deg, #ff4081 0%, #e91e63 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="spring"] .pin-input,
+body.theme-spring .pin-input {
+    background: #fce4ec !important;
+    color: #ff4081 !important;
+    border: 2px solid #ff4081 !important;
+}
+
+body[data-theme="spring"] .pin-input:focus,
+body.theme-spring .pin-input:focus {
+    border-color: #e91e63 !important;
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1) !important;
+}
+
+body[data-theme="spring"] .pin-submit-btn,
+body.theme-spring .pin-submit-btn {
+    background: linear-gradient(135deg, #ff4081 0%, #e91e63 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="spring"] .pin-submit-btn:hover,
+body.theme-spring .pin-submit-btn:hover {
+    background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%) !important;
+    box-shadow: 0 5px 15px rgba(255, 64, 129, 0.4) !important;
+}
+
+body[data-theme="spring"] .pin-cancel-btn,
+body.theme-spring .pin-cancel-btn {
+    background: rgba(255, 64, 129, 0.1) !important;
+    color: #ff4081 !important;
+    border: 2px solid #ff4081 !important;
+}
+
+body[data-theme="spring"] .pin-cancel-btn:hover,
+body.theme-spring .pin-cancel-btn:hover {
+    background: rgba(255, 64, 129, 0.2) !important;
+    color: #ff4081 !important;
+    border: 2px solid #ff4081 !important;
+}
+
+/* Summer Theme */
+body[data-theme="summer"] .pin-modal,
+body.theme-summer .pin-modal {
+    background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%) !important;
+}
+
+body[data-theme="summer"] .pin-header,
+body.theme-summer .pin-header {
+    background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="summer"] .pin-input,
+body.theme-summer .pin-input {
+    background: #fff9c4 !important;
+    color: #ffa726 !important;
+    border: 2px solid #ffa726 !important;
+}
+
+body[data-theme="summer"] .pin-input:focus,
+body.theme-summer .pin-input:focus {
+    border-color: #fb8c00 !important;
+    box-shadow: 0 0 0 3px rgba(251, 140, 0, 0.1) !important;
+}
+
+body[data-theme="summer"] .pin-submit-btn,
+body.theme-summer .pin-submit-btn {
+    background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="summer"] .pin-submit-btn:hover,
+body.theme-summer .pin-submit-btn:hover {
+    background: linear-gradient(135deg, #fb8c00 0%, #f57c00 100%) !important;
+    box-shadow: 0 5px 15px rgba(255, 167, 38, 0.4) !important;
+}
+
+body[data-theme="summer"] .pin-cancel-btn,
+body.theme-summer .pin-cancel-btn {
+    background: rgba(255, 167, 38, 0.1) !important;
+    color: #ffa726 !important;
+    border: 2px solid #ffa726 !important;
+}
+
+body[data-theme="summer"] .pin-cancel-btn:hover,
+body.theme-summer .pin-cancel-btn:hover {
+    background: rgba(255, 167, 38, 0.2) !important;
+    color: #ffa726 !important;
+    border: 2px solid #ffa726 !important;
+}
+
+/* Autumn Theme */
+body[data-theme="autumn"] .pin-modal,
+body.theme-autumn .pin-modal {
+    background: linear-gradient(135deg, #ffe8d6 0%, #ffd7ba 100%) !important;
+}
+
+body[data-theme="autumn"] .pin-header,
+body.theme-autumn .pin-header {
+    background: linear-gradient(135deg, #ff6f00 0%, #e65100 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="autumn"] .pin-input,
+body.theme-autumn .pin-input {
+    background: #ffe8d6 !important;
+    color: #ff6f00 !important;
+    border: 2px solid #ff6f00 !important;
+}
+
+body[data-theme="autumn"] .pin-input:focus,
+body.theme-autumn .pin-input:focus {
+    border-color: #e65100 !important;
+    box-shadow: 0 0 0 3px rgba(230, 81, 0, 0.1) !important;
+}
+
+body[data-theme="autumn"] .pin-submit-btn,
+body.theme-autumn .pin-submit-btn {
+    background: linear-gradient(135deg, #ff6f00 0%, #e65100 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="autumn"] .pin-submit-btn:hover,
+body.theme-autumn .pin-submit-btn:hover {
+    background: linear-gradient(135deg, #e65100 0%, #d84315 100%) !important;
+    box-shadow: 0 5px 15px rgba(255, 111, 0, 0.4) !important;
+}
+
+body[data-theme="autumn"] .pin-cancel-btn,
+body.theme-autumn .pin-cancel-btn {
+    background: rgba(255, 111, 0, 0.1) !important;
+    color: #ff6f00 !important;
+    border: 2px solid #ff6f00 !important;
+}
+
+body[data-theme="autumn"] .pin-cancel-btn:hover,
+body.theme-autumn .pin-cancel-btn:hover {
+    background: rgba(255, 111, 0, 0.2) !important;
+    color: #ff6f00 !important;
+    border: 2px solid #ff6f00 !important;
+}
+
+/* Winter Theme */
+body[data-theme="winter"] .pin-modal,
+body.theme-winter .pin-modal {
+    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%) !important;
+}
+
+body[data-theme="winter"] .pin-header,
+body.theme-winter .pin-header {
+    background: linear-gradient(135deg, #0288d1 0%, #01579b 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="winter"] .pin-input,
+body.theme-winter .pin-input {
+    background: #e1f5fe !important;
+    color: #0288d1 !important;
+    border: 2px solid #0288d1 !important;
+}
+
+body[data-theme="winter"] .pin-input:focus,
+body.theme-winter .pin-input:focus {
+    border-color: #01579b !important;
+    box-shadow: 0 0 0 3px rgba(1, 87, 155, 0.1) !important;
+}
+
+body[data-theme="winter"] .pin-submit-btn,
+body.theme-winter .pin-submit-btn {
+    background: linear-gradient(135deg, #0288d1 0%, #01579b 100%) !important;
+    color: white !important;
+}
+
+body[data-theme="winter"] .pin-submit-btn:hover,
+body.theme-winter .pin-submit-btn:hover {
+    background: linear-gradient(135deg, #01579b 0%, #004d7a 100%) !important;
+    box-shadow: 0 5px 15px rgba(2, 136, 209, 0.4) !important;
+}
+
+body[data-theme="winter"] .pin-cancel-btn,
+body.theme-winter .pin-cancel-btn {
+    background: rgba(2, 136, 209, 0.1) !important;
+    color: #0288d1 !important;
+    border: 2px solid #0288d1 !important;
+}
+
+body[data-theme="winter"] .pin-cancel-btn:hover,
+body.theme-winter .pin-cancel-btn:hover {
+    background: rgba(2, 136, 209, 0.2) !important;
+    color: #0288d1 !important;
+    border: 2px solid #0288d1 !important;
+}
+
+/* Payment Section Styles */
+.payment-section {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px 0;
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+    animation: slideIn 0.3s ease;
+}
+
+.payment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(139, 69, 19, 0.1);
+}
+
+.payment-title {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.payment-amount {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.amount-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.amount-value {
+    color: var(--accent1);
+    font-size: 1.8rem;
+    font-weight: 800;
+    text-shadow: 0 2px 4px rgba(139, 69, 19, 0.2);
+}
+
+.consumption-details {
+    margin-bottom: 20px;
+}
+
+.consumption-details h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.date-range {
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    background: rgba(139, 69, 19, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid var(--accent1);
+}
+
+.date-range small {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.consumption-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.consumption-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 15px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    border: 1px solid rgba(139, 69, 19, 0.1);
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.beverage-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.quantity {
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.unit-price {
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.total-price {
+    font-weight: 700;
+    color: var(--accent1);
+    text-align: right;
+}
+
+.total-summary {
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(139, 69, 19, 0.1) 0%, rgba(210, 105, 30, 0.05) 100%);
+    border-radius: 8px;
+    border: 2px solid rgba(139, 69, 19, 0.2);
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.payment-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* PayPal Modal Styles */
+.paypal-payment-info {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(0, 123, 191, 0.1) 0%, rgba(0, 123, 191, 0.05) 100%);
+    border-radius: 10px;
+    border: 2px solid rgba(0, 123, 191, 0.2);
+}
+
+.paypal-amount {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.qr-code-container {
+    margin: 25px 0;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    border: 2px dashed rgba(139, 69, 19, 0.3);
+}
+
+.qr-code-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: var(--text-muted);
+}
+
+.paypal-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+
+.paypal-actions .btn {
+    padding: 12px 25px;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.paypal-actions .btn-primary {
+    background: linear-gradient(135deg, #0070ba 0%, #003087 100%);
+    border: none;
+    color: white;
+}
+
+.paypal-actions .btn-primary:hover {
+    background: linear-gradient(135deg, #003087 0%, #0070ba 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 112, 186, 0.3);
+}
+
+/* myPOS Card Reader Styles */
+.payment-method-selection {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.payment-method-selection h6 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.payment-method-selection .btn-group {
+    width: 100%;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.payment-method-selection .btn-check {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
+.payment-method-selection .btn {
+    flex: 1;
+    max-width: 200px;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    background: var(--background-primary);
+    color: var(--text-primary);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-method-selection .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.payment-method-selection .btn:hover::before {
+    left: 100%;
+}
+
+.payment-method-selection .btn-check:checked + .btn {
+    background: linear-gradient(135deg, var(--button-primary) 0%, var(--button-primary-hover) 100%);
+    border-color: var(--button-primary);
+    color: white;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.payment-method-selection .btn:hover {
+    background: linear-gradient(135deg, var(--button-primary-hover) 0%, var(--button-primary) 100%);
+    border-color: var(--button-primary-hover);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* myPOS Modal Styles */
+.mypos-payment-info {
+    background: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.mypos-payment-info h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.mypos-amount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--background-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.mypos-amount .amount-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.mypos-amount .amount-value {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.mypos-status-container {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+.mypos-status {
+    text-align: center;
+}
+
+.mypos-status .text-success {
+    color: var(--success-color) !important;
+}
+
+.mypos-status .text-danger {
+    color: var(--danger-color) !important;
+}
+
+.mypos-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.mypos-actions .btn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.mypos-actions .btn-info {
+    background: var(--info-color);
+    border-color: var(--info-color);
+    color: white;
+}
+
+.mypos-actions .btn-info:hover {
+    background: var(--info-color-hover);
+    border-color: var(--info-color-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mypos-actions .btn-danger {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
+    color: white;
+}
+
+.mypos-actions .btn-danger:hover {
+    background: var(--danger-color-hover);
+    border-color: var(--danger-color-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Payment buttons visibility */
+.payment-buttons {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+}
+
+.payment-buttons .btn {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    min-width: 200px;
+}
+
+.payment-buttons .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s;
+}
+
+.payment-buttons .btn:hover::before {
+    left: 100%;
+}
+
+.payment-buttons .btn:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.payment-buttons .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    color: white;
+}
+
+.payment-buttons .btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    color: white;
+}
+
+.payment-buttons .btn-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    border: none;
+    color: white;
+}
+
+.payment-buttons .btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    border: none;
+    color: white;
+}
+
+/* Manual myPOS Instructions */
+.mypos-instructions {
+    background: var(--background-secondary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+}
+
+.instruction-step {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: var(--background-primary);
+    border-radius: 8px;
+    border-left: 4px solid var(--button-primary);
+}
+
+.step-number {
+    background: var(--button-primary);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.step-text {
+    color: var(--text-primary);
+    font-weight: 500;
+    flex: 1;
+}
+
+.instruction-step:last-child {
+    margin-bottom: 0;
+}
+
+/* Manual myPOS Modal */
+#myposInstructionsModal .modal-content {
+    border-radius: 16px;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+#myposInstructionsModal .modal-header {
+    background: linear-gradient(135deg, var(--button-primary) 0%, var(--button-primary-hover) 100%);
+    color: white;
+    border-radius: 14px 14px 0 0;
+}
+
+#myposInstructionsModal .modal-title {
+    font-weight: 700;
+}
+
+#myposInstructionsModal .alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    border: 1px solid #bee5eb;
+    border-radius: 8px;
+}
+
+#myposInstructionsModal .btn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+#myposInstructionsModal .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Confirmation modal redesign with theme variables */
+#confirmationModal .modal-dialog {
+    max-width: 540px;
+}
+
+#confirmationModal .modal-content {
+    background: var(--container-bg);
+    border: 2px solid var(--accent4);
+    border-radius: 22px;
+    box-shadow: var(--container-shadow);
+    overflow: hidden;
+}
+
+#confirmationModal .modal-header {
+    background: var(--button-primary);
+    border-bottom: 2px solid var(--accent4);
+    color: #ffffff;
+    padding: 1.35rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#confirmationModal .modal-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: inherit;
+}
+
+#confirmationModal .modal-title i {
+    font-size: 1.45rem;
+}
+
+#confirmationModal .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.85;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#confirmationModal .btn-close:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+#confirmationModal .modal-body {
+    background: linear-gradient(135deg, var(--accent6) 0%, var(--accent7) 100%);
+    padding: 1.85rem 1.9rem;
+    color: var(--text-primary);
+}
+
+#confirmationModal .modal-footer {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, var(--accent7) 100%);
+    border-top: 1px solid var(--accent4);
+    padding: 1.1rem 1.75rem;
+    display: flex;
+    gap: 1rem;
+}
+
+#confirmationModal .modal-footer .btn {
+    min-width: 140px;
+}
+
+.order-summary-modal {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, var(--accent6) 100%);
+    border-radius: 18px;
+    border: 1px solid var(--accent4);
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.order-summary-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.order-summary-icon {
+    height: 56px;
+    width: 56px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--accent1) 0%, var(--accent2) 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.order-summary-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.order-summary-subtitle {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.modal-order-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.modal-order-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-order-items::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 3px;
+}
+
+.modal-order-items::-webkit-scrollbar-thumb {
+    background: var(--accent3);
+    border-radius: 3px;
+}
+
+.modal-order-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.1rem;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, var(--accent7) 100%);
+    border: 1px solid var(--accent4);
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.08);
+}
+
+.modal-order-item-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1.05rem;
+}
+
+.modal-order-item-quantity {
+    min-width: 3rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--accent1);
+    background: var(--accent6);
+    border: 2px solid var(--accent2);
+    border-radius: 12px;
+    padding: 0.35rem 0.55rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 768px) {
+    #confirmationModal .modal-dialog,
+    #paypalModal .modal-dialog,
+    #myposModal .modal-dialog,
+    #paypalModal .modal-dialog-centered,
+    #myposModal .modal-dialog-centered {
+        width: min(720px, calc(100vw - 1.5rem));
+        max-width: min(720px, calc(100vw - 1.5rem));
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+}

@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Payment Management - CSH Coffee System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    <style>
+        /* Ensure theme variables are available */
+        :root {
+            --main-bg: #A4542C;
+            --main-bg-light: #D4A574;
+            --main-box: #F1DEC7;
+            --button-dark: #8B4513;
+            --button-light: #D2691E;
+            --text-dark: #2C1810;
+            --text-light: #FFFFFF;
+            --border-color: #C4A484;
+            --accent-color: {{ theme_color }};
+        }
+        
+        /* Spring Theme */
+        body[data-theme="spring"] {
+            --main-bg: #4A7C59;
+            --main-bg-light: #7BA68A;
+            --main-box: #E8F5E8;
+            --button-dark: #2E7D32;
+            --button-light: #66BB6A;
+            --text-dark: #1B5E20;
+            --text-light: #FFFFFF;
+            --border-color: #A5D6A7;
+        }
+        
+        /* Summer Theme */
+        body[data-theme="summer"] {
+            --main-bg: #E65100;
+            --main-bg-light: #FF8A65;
+            --main-box: #FFF3E0;
+            --button-dark: #D84315;
+            --button-light: #FFAB91;
+            --text-dark: #BF360C;
+            --text-light: #FFFFFF;
+            --border-color: #FFCCBC;
+        }
+        
+        /* Autumn Theme */
+        body[data-theme="autumn"] {
+            --main-bg: #D84315;
+            --main-bg-light: #FF7043;
+            --main-box: #FFEBEE;
+            --button-dark: #BF360C;
+            --button-light: #FF8A65;
+            --text-dark: #8D1B00;
+            --text-light: #FFFFFF;
+            --border-color: #FFAB91;
+        }
+        
+        /* Winter Theme */
+        body[data-theme="winter"] {
+            --main-bg: #1565C0;
+            --main-bg-light: #42A5F5;
+            --main-box: #E3F2FD;
+            --button-dark: #0D47A1;
+            --button-light: #64B5F6;
+            --text-dark: #0D47A1;
+            --text-light: #FFFFFF;
+            --border-color: #90CAF9;
+        }
+        
+        body {
+            background: var(--main-bg);
+            color: var(--text-dark);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            background: var(--main-box);
+            min-height: 100vh;
+            border-right: 2px solid var(--border-color);
+        }
+        
+        .sidebar-content {
+            padding: 20px;
+        }
+        
+        .logo-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .logo-section img {
+            max-width: 60px;
+            margin-bottom: 10px;
+        }
+        
+        .logo-section h4 {
+            color: var(--text-dark);
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-dark);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-item:hover {
+            background: var(--button-light);
+            color: var(--text-light);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: var(--accent-color);
+            color: var(--text-light);
+        }
+        
+        .main-content {
+            background: var(--main-bg-light);
+            min-height: 100vh;
+            padding: 30px;
+        }
+        
+        .content-header {
+            background: var(--main-box);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 2px solid var(--border-color);
+        }
+        
+        .content-header h1 {
+            color: var(--text-dark);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .content-header p {
+            color: var(--text-dark);
+            opacity: 0.8;
+            margin: 0;
+        }
+        
+        .payment-card {
+            background: var(--main-box);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            padding: 20px;
+        }
+        
+        .payment-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-color: var(--accent-color);
+        }
+        
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 2px solid #ffc107;
+        }
+        
+        .status-paid {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            border: 2px solid #28a745;
+        }
+        
+        .status-cancelled {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+            border: 2px solid #dc3545;
+        }
+        
+        .payment-method {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--button-light);
+            color: var(--text-light);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        .amount-display {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 10px 0;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            border-color: #28a745;
+        }
+        
+        .btn-outline-primary {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .btn-outline-danger {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .btn-outline-danger:hover {
+            background: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .modal-content {
+            background: var(--main-box);
+            border: 2px solid var(--border-color);
+        }
+        
+        .modal-header {
+            border-bottom: 2px solid var(--border-color);
+            background: var(--main-bg-light);
+        }
+        
+        .modal-title {
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+        
+        .form-control, .form-select {
+            background: var(--main-box);
+            border: 2px solid var(--border-color);
+            color: var(--text-dark);
+            border-radius: 8px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: var(--main-box);
+            border-color: var(--accent-color);
+            color: var(--text-dark);
+            box-shadow: 0 0 0 0.2rem rgba(139, 69, 19, 0.25);
+        }
+        
+        .form-label {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .btn-primary:hover {
+            background: var(--button-dark);
+            border-color: var(--button-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--button-light);
+            border-color: var(--button-light);
+            color: var(--text-light);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--button-dark);
+            border-color: var(--button-dark);
+        }
+        
+        /* User Search Styling */
+        .user-search-container {
+            position: relative;
+        }
+        
+        .user-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--main-box);
+            border: 2px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .user-search-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .user-search-item:hover {
+            background: var(--button-light);
+            color: var(--text-light);
+        }
+        
+        .user-search-item:last-child {
+            border-bottom: none;
+        }
+        
+        .user-search-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .user-search-info {
+            flex: 1;
+        }
+        
+        .user-search-name {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .user-search-id {
+            font-size: 0.8rem;
+            color: var(--text-dark);
+            opacity: 0.7;
+        }
+        
+        .selected-user {
+            margin-top: 10px;
+            padding: 12px;
+            background: var(--button-light);
+            border-radius: 8px;
+            border: 2px solid var(--accent-color);
+        }
+        
+        .selected-user-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .selected-user .user-name {
+            color: var(--text-light);
+            font-weight: 600;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .payment-card {
+                padding: 15px;
+            }
+            
+            .action-buttons {
+                justify-content: center;
+            }
+            
+            .user-info {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+            
+            .user-search-results {
+                max-height: 150px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .amount-display {
+                font-size: 1.2rem;
+            }
+            
+            .status-badge {
+                padding: 6px 12px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="sidebar-content">
+                    <div class="logo-section">
+                        <img src="{{ url_for('static', filename='images/CSH-Logo.png') }}" alt="CSH Logo" class="logo">
+                        <h4>CSH Coffee</h4>
+                    </div>
+                    
+                    <nav class="nav-menu">
+                        <a href="/" class="nav-item">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                        <a href="/admin/cashbook/overview" class="nav-item">
+                            <i class="fas fa-calculator"></i>
+                            <span>Cashbook</span>
+                        </a>
+                        <a href="/admin/payments" class="nav-item active">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Payments</span>
+                        </a>
+                        {% if is_admin %}
+                        <a href="/admin/display-items" class="nav-item">
+                            <i class="fas fa-coffee"></i>
+                            <span>Beverages</span>
+                        </a>
+                        <a href="/admin/csv-restore" class="nav-item">
+                            <i class="fas fa-file-import"></i>
+                            <span>CSV Restore</span>
+                        </a>
+                        <a href="/admin/access-logs" class="nav-item">
+                            <i class="fas fa-history"></i>
+                            <span>Access Logs</span>
+                        </a>
+                        {% endif %}
+                        <a href="/admin/logout" class="nav-item">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="content-header">
+                    <h1><i class="fas fa-credit-card"></i> Payment Management</h1>
+                    <p class="text-muted">Manage user payments and track payment status</p>
+                </div>
+                
+                <!-- Add Payment Button -->
+                <div class="mb-4">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
+                        <i class="fas fa-plus"></i>
+                        Add Payment
+                    </button>
+                </div>
+                
+                <!-- Users with Open Balances -->
+                <div class="mb-4">
+                    <h3><i class="fas fa-users"></i> Users with Open Balances</h3>
+                    <div class="mb-3">
+                        <input type="text" id="openBalanceSearch" class="form-control" placeholder="Search by name or ID...">
+                    </div>
+                    <div class="row" id="openBalancesContainer">
+                        {% for user_data in users_with_balances %}
+                        {% if user_data.has_balance %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="payment-card" data-user-name="{{ (user_data.user.first_name ~ ' ' ~ user_data.user.last_name)|lower }}" data-user-id="{{ user_data.user.id }}">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="user-info">
+                                        <div class="user-avatar">
+                                            {{ user_data.user.first_name[0] }}{{ user_data.user.last_name[0] }}
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">{{ user_data.user.first_name }} {{ user_data.user.last_name }}</h6>
+                                            <small class="text-muted">ID: {{ user_data.user.id }}</small>
+                                        </div>
+                                    </div>
+                                    <span class="status-badge status-pending">
+                                        Unpaid
+                                    </span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="amount-display">€{{ "%.2f"|format(user_data.unpaid_amount_euros) }}</div>
+                                    <div class="payment-method">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        Outstanding Balance
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i>
+                                        Needs Payment
+                                    </small>
+                                    
+                                    <div class="action-buttons">
+                                        <button class="btn btn-success btn-sm" onclick="createQuickPayment({{ user_data.user.id }}, {{ user_data.unpaid_amount_cents }}, 'cash')">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                            Cash
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="createQuickPayment({{ user_data.user.id }}, {{ user_data.unpaid_amount_cents }}, 'paypal')">
+                                            <i class="fab fa-paypal"></i>
+                                            PayPal
+                                        </button>
+                                        
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="viewUserPayments({{ user_data.user.id }})">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if not users_with_balances|selectattr('has_balance')|list %}
+                        <div class="col-12">
+                            <div class="alert alert-success text-center">
+                                <i class="fas fa-check-circle"></i>
+                                <strong>All users are up to date!</strong> No outstanding balances.
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Payments List -->
+                <div class="row">
+                    {% for payment, user in payments_data %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="payment-card p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="user-info">
+                                    <div class="user-avatar">
+                                        {{ user.first_name[0] }}{{ user.last_name[0] }}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ user.first_name }} {{ user.last_name }}</h6>
+                                        <small class="text-muted">ID: {{ user.id }}</small>
+                                    </div>
+                                </div>
+                                <span class="status-badge status-{{ payment.payment_status }}">
+                                    {{ payment.payment_status.title() }}
+                                </span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="amount-display">€{{ "%.2f"|format(payment.amount_cents / 100) }}</div>
+                                <div class="payment-method">
+                                    {% if payment.payment_method == 'paypal' %}
+                                        <i class="fab fa-paypal"></i>
+                                        PayPal
+                                    {% elif payment.payment_method == 'mypos_card' %}
+                                        <i class="fas fa-credit-card"></i>
+                                        Card Payment
+                                    {% elif payment.payment_method == 'cash' %}
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        Cash
+                                    {% else %}
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        {{ payment.payment_method.title() }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if payment.notes %}
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-sticky-note"></i>
+                                    {{ payment.notes }}
+                                </small>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i>
+                                    {{ payment.created_at.strftime('%d.%m.%Y %H:%M') }}
+                                </small>
+                                
+                                <div class="action-buttons">
+                                    {% if payment.payment_status == 'pending' %}
+                                    <button class="btn btn-success btn-sm" onclick="markAsPaid({{ payment.id }})">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    {% elif payment.payment_status == 'paid' %}
+                                    <button class="btn btn-warning btn-sm" onclick="revertToUnpaid({{ payment.id }})">
+                                        <i class="fas fa-undo"></i>
+                                        Revert
+                                    </button>
+                                    <button class="btn btn-info btn-sm" onclick="generateReceipt({{ payment.id }})">
+                                        <i class="fas fa-receipt"></i>
+                                        Receipt
+                                    </button>
+                                    {% endif %}
+                                    
+                                    <button class="btn btn-outline-primary btn-sm" onclick="editPayment({{ payment.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    
+                                    {% if payment.payment_status != 'paid' %}
+                                    <button class="btn btn-outline-danger btn-sm" onclick="deletePayment({{ payment.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Payment Modal -->
+    <div class="modal fade" id="addPaymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus"></i>
+                        Add Payment
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPaymentForm">
+                        <div class="mb-3">
+                            <label class="form-label">User</label>
+                            <div class="user-search-container">
+                                <input type="text" class="form-control" id="userSearchInput" placeholder="Search for user by name..." autocomplete="off">
+                                <div class="user-search-results" id="userSearchResults" style="display: none;"></div>
+                                <input type="hidden" id="paymentUserId" required>
+                                <div class="selected-user" id="selectedUser" style="display: none;">
+                                    <div class="selected-user-info">
+                                        <span class="user-name"></span>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearSelectedUser()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Amount (€)</label>
+                            <input type="number" class="form-control" id="paymentAmount" step="0.01" min="0" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select" id="paymentMethod">
+                                <option value="cash">Cash</option>
+                                <option value="paypal">PayPal</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" id="paymentNotes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createPayment()">
+                        <i class="fas fa-save"></i>
+                        Create Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Payment Modal -->
+    <div class="modal fade" id="editPaymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit"></i>
+                        Edit Payment
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editPaymentForm">
+                        <input type="hidden" id="editPaymentId">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Payment Status</label>
+                            <select class="form-select" id="editPaymentStatus">
+                                <option value="pending">Pending</option>
+                                <option value="paid">Paid</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Payment Reference</label>
+                            <input type="text" class="form-control" id="editPaymentReference" placeholder="Transaction ID, Receipt Number, etc.">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" id="editPaymentNotes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updatePayment()">
+                        <i class="fas fa-save"></i>
+                        Update Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main/theme.js') }}"></script>
+    <script>
+        // Global users array for search
+        let allUsers = [];
+        
+        // Load users for payment creation
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/index-data');
+                const data = await response.json();
+                allUsers = data.users;
+                
+                // Set up search functionality
+                setupUserSearch();
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+        
+        // Setup user search functionality
+        function setupUserSearch() {
+            const searchInput = document.getElementById('userSearchInput');
+            const searchResults = document.getElementById('userSearchResults');
+            
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                
+                if (query.length < 2) {
+                    searchResults.style.display = 'none';
+                    return;
+                }
+                
+                // Filter users based on search query
+                const filteredUsers = allUsers.filter(user => {
+                    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
+                    return fullName.includes(query);
+                });
+                
+                displaySearchResults(filteredUsers);
+            });
+            
+            // Hide results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.user-search-container')) {
+                    searchResults.style.display = 'none';
+                }
+            });
+        }
+        
+        // Display search results
+        function displaySearchResults(users) {
+            const searchResults = document.getElementById('userSearchResults');
+            
+            if (users.length === 0) {
+                searchResults.innerHTML = '<div class="user-search-item">No users found</div>';
+            } else {
+                searchResults.innerHTML = users.map(user => `
+                    <div class="user-search-item" onclick="selectUser(${user.id}, '${user.first_name}', '${user.last_name}')">
+                        <div class="user-search-avatar">
+                            ${user.first_name[0]}${user.last_name[0]}
+                        </div>
+                        <div class="user-search-info">
+                            <div class="user-search-name">${user.first_name} ${user.last_name}</div>
+                            <div class="user-search-id">ID: ${user.id}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            searchResults.style.display = 'block';
+        }
+        
+        // Select a user from search results
+        function selectUser(userId, firstName, lastName) {
+            const searchInput = document.getElementById('userSearchInput');
+            const searchResults = document.getElementById('userSearchResults');
+            const selectedUser = document.getElementById('selectedUser');
+            const paymentUserId = document.getElementById('paymentUserId');
+            
+            // Set the hidden input value
+            paymentUserId.value = userId;
+            
+            // Show selected user
+            selectedUser.querySelector('.user-name').textContent = `${firstName} ${lastName}`;
+            selectedUser.style.display = 'block';
+            
+            // Clear search
+            searchInput.value = '';
+            searchResults.style.display = 'none';
+        }
+        
+        // Clear selected user
+        function clearSelectedUser() {
+            const selectedUser = document.getElementById('selectedUser');
+            const paymentUserId = document.getElementById('paymentUserId');
+            const searchInput = document.getElementById('userSearchInput');
+            
+            selectedUser.style.display = 'none';
+            paymentUserId.value = '';
+            searchInput.value = '';
+        }
+        
+        // Create payment
+        async function createPayment() {
+            const userId = document.getElementById('paymentUserId').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const method = document.getElementById('paymentMethod').value;
+            const notes = document.getElementById('paymentNotes').value;
+            
+            if (!userId || !amount) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/payments/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: parseInt(userId),
+                        amount_cents: Math.round(amount * 100),
+                        payment_method: method,
+                        notes: notes
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error creating payment:', error);
+                alert('Error creating payment');
+            }
+        }
+        
+        // Mark payment as paid
+        async function markAsPaid(paymentId) {
+            if (confirm('Mark this payment as paid?')) {
+                try {
+                    const response = await fetch(`/api/payments/${paymentId}/update`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            payment_status: 'paid',
+                            payment_reference: 'Cash payment',
+                            notes: 'Marked as paid by admin'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Error updating payment:', error);
+                    alert('Error updating payment');
+                }
+            }
+        }
+        
+        // Edit payment
+        function editPayment(paymentId) {
+            // This would need to be implemented to load payment data
+            document.getElementById('editPaymentId').value = paymentId;
+            const modal = new bootstrap.Modal(document.getElementById('editPaymentModal'));
+            modal.show();
+        }
+        
+        // Update payment
+        async function updatePayment() {
+            const paymentId = document.getElementById('editPaymentId').value;
+            const status = document.getElementById('editPaymentStatus').value;
+            const reference = document.getElementById('editPaymentReference').value;
+            const notes = document.getElementById('editPaymentNotes').value;
+            
+            try {
+                const response = await fetch(`/api/payments/${paymentId}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        payment_status: status,
+                        payment_reference: reference,
+                        notes: notes
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error updating payment:', error);
+                alert('Error updating payment');
+            }
+        }
+        
+        // Delete payment
+        async function deletePayment(paymentId) {
+            if (confirm('Are you sure you want to delete this payment?')) {
+                try {
+                    const response = await fetch(`/api/payments/${paymentId}/delete`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Error deleting payment:', error);
+                    alert('Error deleting payment');
+                }
+            }
+        }
+        
+        // Quick payment creation
+        async function createQuickPayment(userId, amountCents, method) {
+            if (method !== 'cash' && method !== 'paypal') {
+                alert('Invalid payment method');
+                return;
+            }
+            if (confirm(`Create ${method.toUpperCase()} payment of €${(amountCents / 100).toFixed(2)} for this user?`)) {
+                try {
+                    const response = await fetch('/api/payments/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            user_id: userId,
+                            amount_cents: amountCents,
+                            payment_method: method,
+                            notes: `Quick ${method} payment from admin panel`
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        // For cash, mark paid immediately. For PayPal, admin marks upon receipt or webhook handles it.
+                        if (method === 'cash') {
+                            await markPaymentAsPaid(data.payment_id);
+                        }
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Error creating quick payment:', error);
+                    alert('Error creating payment');
+                }
+            }
+        }
+        
+        // View user payment history
+        function viewUserPayments(userId) {
+            // Filter payments to show only this user's payments
+            const userPayments = document.querySelectorAll('.payment-card');
+            userPayments.forEach(card => {
+                const userIdInCard = card.querySelector('[data-user-id]');
+                if (userIdInCard && parseInt(userIdInCard.dataset.userId) !== userId) {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // You could also implement a modal or separate view here
+            alert(`Viewing payment history for user ${userId}`);
+        }
+        
+        // Mark payment as paid
+        async function markPaymentAsPaid(paymentId) {
+            try {
+                const response = await fetch(`/api/payments/${paymentId}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        payment_status: 'paid',
+                        payment_reference: 'Cash payment - Admin',
+                        notes: 'Marked as paid by admin'
+                    })
+                });
+                
+                const data = await response.json();
+                return data.success;
+            } catch (error) {
+                console.error('Error marking payment as paid:', error);
+                return false;
+            }
+        }
+        
+        // Revert payment to unpaid status
+        async function revertToUnpaid(paymentId) {
+            if (confirm('Revert this payment to unpaid status? This will make the linked consumptions unpaid again.')) {
+                try {
+                    const response = await fetch(`/api/payments/${paymentId}/revert`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('Error reverting payment:', error);
+                    alert('Error reverting payment');
+                }
+            }
+        }
+        
+        // Filter open balances by search
+        function filterOpenBalances(query) {
+            const container = document.getElementById('openBalancesContainer');
+            const cards = container.querySelectorAll('.payment-card');
+            const q = (query || '').toLowerCase().trim();
+            cards.forEach(card => {
+                const name = card.getAttribute('data-user-name') || '';
+                const id = String(card.getAttribute('data-user-id') || '');
+                const matches = !q || name.includes(q) || id.includes(q);
+                // Show/hide the column wrapper of the card to keep grid layout clean
+                const col = card.closest('.col-md-6, .col-lg-4, .mb-3') || card.parentElement;
+                (matches ? (col.style.display = '') : (col.style.display = 'none'));
+            });
+        }
+        
+        // Generate receipt
+        function generateReceipt(paymentId) {
+            // Open receipt in new window
+            const receiptUrl = `/payment_receipt.html?payment_id=${paymentId}`;
+            window.open(receiptUrl, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+            
+            // Apply current theme
+            fetch('/api/get-theme')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.body.setAttribute('data-theme', data.theme);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading theme:', error);
+                });
+            
+            // Hook up open balances search
+            const obs = document.getElementById('openBalanceSearch');
+            if (obs) {
+                obs.addEventListener('input', (e) => filterOpenBalances(e.target.value));
+            }
+        });
+    </script>
+</body>
+</html>

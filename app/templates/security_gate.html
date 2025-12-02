@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Security Gate - Laurin Build</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    <style>
+        body {
+            /* fallback accent vars if base stylesheet not yet loaded */
+            --accent1:#8B4513; --accent2:#D2691E; --gradient-accent:linear-gradient(135deg,#8B4513 0%, #D2691E 100%);
+            min-height:100vh;
+            display:flex; align-items:center; justify-content:center;
+            background: var(--page-bg, linear-gradient(135deg, #8B4513 0%, #A0522D 25%, #D2691E 50%, #CD853F 75%, #DEB887 100%));
+        }
+        /* Theme background helpers (can be centralized later) */
+        body[data-theme="coffee"] { --page-bg: linear-gradient(135deg,#8B4513 0%,#A0522D 15%,#D2691E 30%,#CD853F 45%,#DEB887 60%,#F5DEB3 75%,#FFF8DC 90%,#FFFAF0 100%); }
+        body[data-theme="spring"] { --page-bg: linear-gradient(135deg,#4CAF50 0%,#66BB6A 15%,#8BC34A 30%,#AED581 45%,#C8E6C9 60%,#DCEDC8 75%,#F1F8E9 90%,#FFFFFF 100%); }
+        body[data-theme="summer"] { --page-bg: linear-gradient(135deg,#FF9800 0%,#FFB74D 15%,#FFC107 30%,#FFD54F 45%,#FFECB3 60%,#FFF3E0 75%,#FFF8E1 90%,#FFFFFF 100%); }
+        body[data-theme="autumn"] { --page-bg: linear-gradient(135deg,#FF5722 0%,#FF7043 15%,#FF9800 30%,#FFB74D 45%,#FFCC80 60%,#FFE0B2 75%,#FFF3E0 90%,#FFFFFF 100%); }
+        body[data-theme="winter"] { --page-bg: linear-gradient(135deg,#2196F3 0%,#42A5F5 15%,#64B5F6 30%,#90CAF9 45%,#BBDEFB 60%,#E3F2FD 75%,#F3E5F5 90%,#FFFFFF 100%); }
+        .security-gate-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+        .security-title { color: var(--accent1); font-weight:700; margin-bottom:1rem; }
+        .security-subtitle {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+        .form-control {
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-security {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-security:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        }
+        .access-info {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .back-link {
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .back-link:hover { color: var(--accent2); }
+    </style>
+</head>
+<body data-theme="{{ theme|default('coffee') }}" class="theme-{{ theme|default('coffee') }}">
+    <div class="container">
+        <div class="security-gate-card">
+            <div class="text-center mb-4">
+                <i class="fas fa-lock fa-3x text-primary mb-3"></i>
+                <h2 class="security-title">Security Gate</h2>
+                <p class="security-subtitle">Laurin Build Access Control</p>
+            </div>
+
+            <div class="access-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Access Required:</strong> Please enter the access code to continue to the system.
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('routes.security_gate_verify') }}">
+                <div class="mb-3">
+                    <label for="access_code" class="form-label">
+                        <i class="fas fa-key me-2"></i>Access Code
+                    </label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="access_code" 
+                           name="access_code" 
+                           placeholder="Enter access code"
+                           required>
+                    <div class="form-text">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        Try: CSH2024, LAURIN, ADMIN, or ACCESS
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-security">
+                        <i class="fas fa-unlock me-2"></i>Access System
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center mt-4">
+                <a href="{{ url_for('routes.admin_login') }}" class="back-link">
+                    <i class="fas fa-shield-alt me-1"></i>Admin Access
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme Switcher for Security Gate
+        class ThemeSwitcher {
+            constructor() {
+                this.currentTheme = localStorage.getItem('selectedTheme') || 'coffee';
+                this.applyTheme(this.currentTheme);
+            }
+
+            applyTheme(theme) {
+                document.body.setAttribute('data-theme', theme);
+            }
+        }
+
+        // Initialize theme when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            new ThemeSwitcher();
+        });
+    </script>
+</body>
+</html>

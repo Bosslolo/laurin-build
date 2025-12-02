@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Monthly Consumption Report - {{ report_date.strftime('%B %Y') }}</title>
+    <meta name="theme-color" content="{{ theme_color|default('#222222') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    <style>
+        /* Modern Theme System */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+            --border-radius: 12px;
+            --border-radius-lg: 20px;
+            --transition: all 0.3s ease;
+        }
+        
+        /* Coffee Theme */
+        body[data-theme="coffee"] {
+            --primary-color: #8B4513;
+            --secondary-color: #D2691E;
+            --success-color: #228B22;
+            --warning-color: #FF8C00;
+            --danger-color: #DC143C;
+            --light-color: #F5F5DC;
+            --dark-color: #2F1B14;
+        }
+        
+        /* Spring Theme */
+        body[data-theme="spring"] {
+            --primary-color: #2E7D32;
+            --secondary-color: #4CAF50;
+            --success-color: #66BB6A;
+            --warning-color: #FFC107;
+            --danger-color: #F44336;
+            --light-color: #E8F5E8;
+            --dark-color: #1B5E20;
+        }
+        
+        /* Summer Theme */
+        body[data-theme="summer"] {
+            --primary-color: #FF9800;
+            --secondary-color: #FFB74D;
+            --success-color: #4CAF50;
+            --warning-color: #FFC107;
+            --danger-color: #F44336;
+            --light-color: #FFF3E0;
+            --dark-color: #E65100;
+        }
+        
+        /* Autumn Theme */
+        body[data-theme="autumn"] {
+            --primary-color: #D84315;
+            --secondary-color: #FF7043;
+            --success-color: #4CAF50;
+            --warning-color: #FF9800;
+            --danger-color: #D32F2F;
+            --light-color: #FFF3E0;
+            --dark-color: #BF360C;
+        }
+        
+        /* Winter Theme */
+        body[data-theme="winter"] {
+            --primary-color: #1976D2;
+            --secondary-color: #42A5F5;
+            --success-color: #4CAF50;
+            --warning-color: #FF9800;
+            --danger-color: #F44336;
+            --light-color: #E3F2FD;
+            --dark-color: #0D47A1;
+        }
+        
+        /* Base Styles */
+        body {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--dark-color);
+            min-height: 100vh;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+        }
+        
+        .report-container {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            margin: 2rem auto;
+            padding: 2.5rem;
+            max-width: 1400px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .report-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 3px solid var(--primary-color);
+            position: relative;
+        }
+        
+        .report-header::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: var(--secondary-color);
+        }
+        
+        .report-title {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .report-subtitle {
+            color: var(--secondary-color);
+            font-size: 1.2rem;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+        
+        /* Date Selector */
+        .date-selector {
+            background: var(--light-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .date-selector h5 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .form-select, .form-control {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+        
+        .form-select:focus, .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25);
+        }
+        
+        /* Statistics Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+        
+        .stats-card:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stats-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Tables */
+        .table-container {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .table-container h4 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--light-color);
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: var(--white);
+            border: none;
+            font-weight: 600;
+            padding: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+        
+        .table td {
+            padding: 1rem;
+            border-color: rgba(0, 0, 0, 0.05);
+            color: var(--dark-color);
+            vertical-align: middle;
+        }
+        
+        /* High contrast alternating row colors for better readability */
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f8f9fa;
+        }
+        
+        .table-striped tbody tr:nth-of-type(even) {
+            background-color: #e9ecef;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: var(--secondary-color) !important;
+            color: var(--white);
+            transform: scale(1.01);
+            transition: var(--transition);
+        }
+        
+        .table-hover tbody tr:hover td {
+            color: var(--white);
+        }
+        
+        /* Daily Stats */
+        .daily-stats-container {
+            background: var(--light-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .daily-stats-container h4 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        
+        .daily-stats-container .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f8f9fa;
+        }
+        
+        .daily-stats-container .table-striped tbody tr:nth-of-type(even) {
+            background-color: #e9ecef;
+        }
+        
+        .daily-stats-container .table-hover tbody tr:hover {
+            background-color: var(--secondary-color) !important;
+            color: var(--white);
+        }
+        
+        .daily-stats-container .table-hover tbody tr:hover td {
+            color: var(--white);
+        }
+        
+        /* Buttons */
+        .btn-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            border-radius: 8px;
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            color: var(--white);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: var(--white);
+        }
+        
+        .btn-outline-secondary {
+            color: var(--dark-color);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .btn-outline-secondary:hover {
+            background: var(--dark-color);
+            border-color: var(--dark-color);
+            color: var(--white);
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        
+        .badge.bg-primary {
+            background: var(--primary-color) !important;
+        }
+        
+        .badge.bg-info {
+            background: var(--secondary-color) !important;
+        }
+        
+        /* Cost Highlight */
+        .cost-highlight {
+            font-weight: 700;
+            color: var(--success-color);
+            font-size: 1.1rem;
+        }
+        
+        /* Ensure cost highlight is visible on hover */
+        .table-hover tbody tr:hover .cost-highlight {
+            color: var(--white) !important;
+        }
+        
+        /* Export Buttons */
+        .export-buttons {
+            margin: 2rem 0;
+            text-align: center;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .report-container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            
+            .report-title {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body data-theme="{{ theme|default('coffee') }}" class="theme-{{ theme|default('coffee') }}">
+    <div class="container-fluid">
+        <div class="report-container">
+            <!-- Header -->
+            <div class="report-header">
+                <h1 class="report-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Monthly Consumption Report
+                </h1>
+                <p class="report-subtitle">{{ report_date.strftime('%B %Y') }}</p>
+            </div>
+            
+            <!-- Date Range Selector -->
+            <div class="date-selector">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <h5><i class="fas fa-calendar-alt"></i> Select Period</h5>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-primary w-100" onclick="toggleDateRange()" id="toggleBtn">
+                                    <i class="fas fa-calendar"></i> Custom Range
+                                </button>
+                            </div>
+                            <div class="col-md-3" id="monthYearSelector">
+                                <select class="form-select" id="yearSelect">
+                                    {% set unique_years = [] %}
+                                    {% for month_data in available_months %}
+                                        {% if month_data.year not in unique_years %}
+                                            {% set _ = unique_years.append(month_data.year) %}
+                                            <option value="{{ month_data.year }}" {% if month_data.year == current_year %}selected{% endif %}>
+                                                {{ month_data.year }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3" id="monthSelector">
+                                <select class="form-select" id="monthSelect">
+                                    {% set month_names = {1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May', 6: 'June', 7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November', 12: 'December'} %}
+                                    {% for month_data in available_months %}
+                                        {% if month_data.year == current_year %}
+                                        <option value="{{ month_data.month }}" {% if month_data.month == current_month %}selected{% endif %}>
+                                            {{ month_names[month_data.month] }}
+                                        </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6" id="dateRangeSelector" style="display: none;">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <input type="date" class="form-control" id="startDate" value="{{ start_date.strftime('%Y-%m-%d') if use_date_range else '' }}">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="date" class="form-control" id="endDate" value="{{ end_date.strftime('%Y-%m-%d') if use_date_range else '' }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Export Buttons -->
+            <div class="export-buttons text-center">
+                <button class="btn btn-custom me-2" onclick="exportToCSV()">
+                    <i class="fas fa-download"></i> Export CSV
+                </button>
+                <button class="btn btn-custom me-2" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+                <a href="{{ url_for('routes.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+            
+            {% if summary_stats and summary_stats.total_users > 0 %}
+            <!-- Summary Statistics -->
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <div class="stats-number">{{ summary_stats.total_users }}</div>
+                    <div class="stats-label">Active Users</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number">{{ summary_stats.total_consumptions }}</div>
+                    <div class="stats-label">Total Orders</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number">{{ summary_stats.total_quantity }}</div>
+                    <div class="stats-label">Total Items</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number">€{{ "%.2f"|format(summary_stats.total_revenue_cents / 100) }}</div>
+                    <div class="stats-label">Total Revenue</div>
+                </div>
+            </div>
+            
+            {% if daily_stats %}
+            <!-- Daily Statistics -->
+            <div class="daily-stats-container">
+                <h4><i class="fas fa-calendar-day"></i> Daily Breakdown</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Orders</th>
+                                <th>Items</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day in daily_stats %}
+                            <tr>
+                                <td>
+                                    <strong>{{ day.date.strftime('%A, %B %d, %Y') }}</strong>
+                                </td>
+                                <td>{{ day.daily_consumptions }}</td>
+                                <td>{{ day.daily_quantity }}</td>
+                                <td class="cost-highlight">€{{ "%.2f"|format(day.daily_revenue_cents / 100) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- User Summaries -->
+            <div class="table-container">
+                <h4><i class="fas fa-users"></i> User Summary</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Total Items</th>
+                                <th>Orders</th>
+                                <th>Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in user_summaries %}
+                            <tr>
+                                <td>
+                                    <strong>{{ user.first_name }} {{ user.last_name }}</strong>
+                                    {% if user.email %}
+                                        <br><small class="text-muted">{{ user.email }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ user.role_name }}</span>
+                                </td>
+                                <td>{{ user.total_quantity }}</td>
+                                <td>{{ user.total_consumptions }}</td>
+                                <td class="cost-highlight">€{{ "%.2f"|format(user.total_cost_cents / 100) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Detailed Consumption -->
+            <div class="table-container">
+                <h4><i class="fas fa-list"></i> Detailed Consumption</h4>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="consumptionTable">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Beverage</th>
+                                <th>Category</th>
+                                <th>Quantity</th>
+                                <th>Orders</th>
+                                <th>Avg Price</th>
+                                <th>Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for consumption in consumptions %}
+                            <tr>
+                                <td>
+                                    <strong>{{ consumption.first_name }} {{ consumption.last_name }}</strong>
+                                    {% if consumption.email %}
+                                        <br><small class="text-muted">{{ consumption.email }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ consumption.beverage_name }}</td>
+                                <td>
+                                    <span class="badge {% if consumption.category == 'drink' %}bg-primary{% else %}bg-info{% endif %}">
+                                        {{ consumption.category.title() }}
+                                    </span>
+                                </td>
+                                <td>{{ consumption.total_quantity }}</td>
+                                <td>{{ consumption.consumption_count }}</td>
+                                <td>€{{ "%.2f"|format(consumption.avg_price_cents / 100) }}</td>
+                                <td class="cost-highlight">€{{ "%.2f"|format(consumption.total_cost_cents / 100) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No Data Available</h4>
+                <p class="text-muted">No consumption data found for the selected period.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme Switcher for Monthly Report
+        class ThemeSwitcher {
+            constructor() {
+                // Get theme from server-side template first, then localStorage
+                const serverTheme = document.body.getAttribute('data-theme') || 'coffee';
+                this.currentTheme = localStorage.getItem('selectedTheme') || serverTheme;
+                this.init();
+            }
+
+            init() {
+                // Set initial theme
+                this.applyTheme(this.currentTheme);
+                
+                // Listen for theme changes from other windows/tabs
+                window.addEventListener('message', (event) => {
+                    if (event.data.type === 'THEME_CHANGE') {
+                        this.currentTheme = event.data.theme;
+                        this.applyTheme(event.data.theme);
+                    }
+                });
+
+                // Listen for storage changes (when theme is changed in another tab)
+                window.addEventListener('storage', (event) => {
+                    if (event.key === 'selectedTheme') {
+                        this.currentTheme = event.newValue || 'coffee';
+                        this.applyTheme(this.currentTheme);
+                    }
+                });
+            }
+
+            applyTheme(theme) {
+                document.body.setAttribute('data-theme', theme);
+                document.body.className = `theme-${theme}`;
+            }
+        }
+
+        // Initialize theme when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            new ThemeSwitcher();
+            
+            // Debug: Log current theme
+            console.log('Current theme:', document.body.getAttribute('data-theme'));
+            console.log('Theme class:', document.body.className);
+        });
+    </script>
+    <script>
+        // Date range toggle functionality
+        function toggleDateRange() {
+            const monthYearSelector = document.getElementById('monthYearSelector');
+            const monthSelector = document.getElementById('monthSelector');
+            const dateRangeSelector = document.getElementById('dateRangeSelector');
+            const toggleBtn = document.getElementById('toggleBtn');
+            
+            if (dateRangeSelector.style.display === 'none') {
+                // Switch to date range mode
+                monthYearSelector.style.display = 'none';
+                monthSelector.style.display = 'none';
+                dateRangeSelector.style.display = 'block';
+                toggleBtn.innerHTML = '<i class="fas fa-calendar-alt"></i> Month View';
+                toggleBtn.className = 'btn btn-outline-secondary w-100';
+            } else {
+                // Switch to month/year mode
+                monthYearSelector.style.display = 'block';
+                monthSelector.style.display = 'block';
+                dateRangeSelector.style.display = 'none';
+                toggleBtn.innerHTML = '<i class="fas fa-calendar"></i> Custom Range';
+                toggleBtn.className = 'btn btn-outline-primary w-100';
+            }
+        }
+        
+        // Month selector functionality
+        document.getElementById('yearSelect').addEventListener('change', updateReport);
+        document.getElementById('monthSelect').addEventListener('change', updateReport);
+        
+        // Date range functionality
+        document.getElementById('startDate').addEventListener('change', updateDateRange);
+        document.getElementById('endDate').addEventListener('change', updateDateRange);
+        
+        function updateReport() {
+            const year = document.getElementById('yearSelect').value;
+            const month = document.getElementById('monthSelect').value;
+            window.location.href = `{{ url_for('routes.monthly_report') }}?year=${year}&month=${month}`;
+        }
+        
+        function updateDateRange() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (startDate && endDate) {
+                window.location.href = `{{ url_for('routes.monthly_report') }}?start_date=${startDate}&end_date=${endDate}`;
+            }
+        }
+        
+        // Export to CSV
+        function exportToCSV() {
+            const table = document.getElementById('consumptionTable');
+            const rows = table.querySelectorAll('tr');
+            let csv = [];
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = [];
+                const cols = rows[i].querySelectorAll('td, th');
+                
+                for (let j = 0; j < cols.length; j++) {
+                    // Clean up the text content
+                    let text = cols[j].innerText.replace(/\n/g, ' ').trim();
+                    row.push('"' + text + '"');
+                }
+                csv.push(row.join(','));
+            }
+            
+            const csvContent = csv.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'consumption_report_{{ report_date.strftime("%Y_%m") }}.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+    <script src="{{ url_for('static', filename='js/main/theme.js') }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>⚠️ RESTRICTED ACCESS - ADMIN ONLY ⚠️</title>
+    <meta name="theme-color" content="#ff0000">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/global.css') }}" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body {
+            background: linear-gradient(135deg, #000000, #1a0000, #330000);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            color: #ff0000;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+        
+        .warning-container {
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #ff0000;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 0 30px #ff0000;
+            position: relative;
+            max-width: 500px;
+            width: 90%;
+            margin: 20px;
+        }
+        
+        .warning-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .warning-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #ff0000;
+            text-shadow: 0 0 20px #ff0000;
+            margin-bottom: 10px;
+        }
+        
+        .warning-subtitle {
+            font-size: 1.2rem;
+            color: #ff6666;
+            margin-bottom: 20px;
+        }
+        
+        .danger-icon {
+            font-size: 4rem;
+            color: #ff0000;
+            margin-bottom: 20px;
+        }
+        
+        .warning-text {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff0000;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .warning-text h4 {
+            color: #ff0000;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .warning-text p {
+            color: #ff6666;
+            margin-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            color: #ff0000;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .form-control {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff0000;
+            color: #ffffff;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            padding: 15px;
+        }
+        
+        .form-control:focus {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: #ff6666;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            color: #ffffff;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #ff0000, #cc0000);
+            border: 2px solid #ff0000;
+            font-weight: 700;
+            font-size: 1.2rem;
+            padding: 15px 30px;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(45deg, #cc0000, #990000);
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+            transform: scale(1.05);
+        }
+        
+        .alert-danger {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff0000;
+            color: #ff6666;
+            font-weight: 700;
+        }
+        
+        .security-notice {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff0000;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #ff6666;
+        }
+        
+        .floating-warning {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            background: #ff0000;
+            color: #000000;
+            padding: 10px;
+            border-radius: 50%;
+            font-weight: 900;
+        }
+        
+    </style>
+</head>
+<body>
+    
+    <div class="warning-container">
+        <div class="floating-warning">⚠️</div>
+        
+        <div class="warning-header">
+            <div class="danger-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h1 class="warning-title">RESTRICTED ACCESS</h1>
+            <p class="warning-subtitle">ADMINISTRATOR LOGIN REQUIRED</p>
+        </div>
+        
+        <div class="warning-text">
+            <h4><i class="fas fa-shield-alt"></i> SECURITY WARNING</h4>
+            <p><strong>⚠️ UNAUTHORIZED ACCESS PROHIBITED ⚠️</strong></p>
+            <p>This system is monitored and logged.</p>
+            <p>Only authorized administrators may proceed.</p>
+            <p><strong>All access attempts are recorded.</strong></p>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }}"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="{{ url_for('routes.admin_authenticate') }}">
+            <div class="form-group">
+                <label for="username" class="form-label">
+                    <i class="fas fa-user-secret"></i> ADMINISTRATOR USERNAME
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="username" 
+                       name="username" 
+                       placeholder="Enter administrator username"
+                       required
+                       autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+                <label for="password" class="form-label">
+                    <i class="fas fa-key"></i> ADMINISTRATOR PASSWORD
+                </label>
+                <input type="password" 
+                       class="form-control" 
+                       id="password" 
+                       name="password" 
+                       placeholder="Enter administrator password"
+                       required
+                       autocomplete="off">
+            </div>
+            
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-unlock-alt"></i> AUTHENTICATE
+            </button>
+        </form>
+        
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Simple focus effects for better UX
+        document.addEventListener('DOMContentLoaded', function() {
+            const usernameField = document.getElementById('username');
+            const passwordField = document.getElementById('password');
+            
+            [usernameField, passwordField].forEach(field => {
+                field.addEventListener('focus', function() {
+                    this.style.boxShadow = '0 0 20px rgba(255, 0, 0, 0.5)';
+                });
+                
+                field.addEventListener('blur', function() {
+                    this.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.3)';
+                });
+            });
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/main/admin_session.js') }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Payment Receipt - CSH Coffee System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .receipt-container {
+            max-width: 400px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .receipt-header {
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .receipt-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .receipt-header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .receipt-body {
+            padding: 20px;
+        }
+        
+        .receipt-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .receipt-info .info-item {
+            text-align: center;
+        }
+        
+        .receipt-info .info-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .receipt-info .info-value {
+            font-weight: 600;
+            color: #212529;
+        }
+        
+        .items-list {
+            margin-bottom: 20px;
+        }
+        
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        
+        .item-row:last-child {
+            border-bottom: none;
+        }
+        
+        .item-name {
+            font-weight: 500;
+            color: #212529;
+        }
+        
+        .item-details {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .item-price {
+            font-weight: 600;
+            color: #212529;
+        }
+        
+        .total-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #212529;
+        }
+        
+        .payment-method {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .receipt-footer {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .receipt-footer p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-share {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-airdrop {
+            background: #007AFF;
+            color: white;
+        }
+        
+        .btn-airdrop:hover {
+            background: #0056CC;
+            color: white;
+        }
+        
+        .btn-print {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-print:hover {
+            background: #545b62;
+            color: white;
+        }
+        
+        @media print {
+            body { background: white; }
+            .receipt-container { box-shadow: none; margin: 0; }
+            .share-buttons { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="receipt-header">
+            <h1><i class="fas fa-coffee"></i> CSH Coffee</h1>
+            <p>Payment Receipt</p>
+        </div>
+        
+        <div class="receipt-body">
+            <div class="receipt-info">
+                <div class="info-item">
+                    <div class="info-label">Receipt #</div>
+                    <div class="info-value" id="receiptNumber">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Date</div>
+                    <div class="info-value" id="paymentDate">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Method</div>
+                    <div class="info-value" id="paymentMethod">Loading...</div>
+                </div>
+            </div>
+            
+            <div class="items-list" id="itemsList">
+                <!-- Items will be loaded here -->
+            </div>
+            
+            <div class="total-section">
+                <div class="total-row">
+                    <span>Total:</span>
+                    <span id="totalAmount">€0.00</span>
+                </div>
+                <div class="payment-method" id="paymentMethodBadge">
+                    <i class="fas fa-credit-card"></i>
+                    <span id="paymentMethodText">Loading...</span>
+                </div>
+            </div>
+            
+            <div class="share-buttons">
+                <button class="btn-share btn-airdrop" onclick="shareReceipt()">
+                    <i class="fas fa-share"></i>
+                    Share Receipt
+                </button>
+                <button class="btn-share btn-print" onclick="printReceipt()">
+                    <i class="fas fa-print"></i>
+                    Print
+                </button>
+                <button class="btn-share btn-secondary" onclick="goBackToEntries()">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Entries
+                </button>
+            </div>
+        </div>
+        
+        <div class="receipt-footer">
+            <p>Thank you for your payment!</p>
+            <p>CSH Coffee System - Christliche Schule im Hegau</p>
+        </div>
+    </div>
+
+    <script>
+        let receiptData = null;
+        
+        // Load receipt data
+        async function loadReceipt() {
+            const paymentId = new URLSearchParams(window.location.search).get('payment_id');
+            if (!paymentId) {
+                alert('No payment ID provided');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/payment/receipt/${paymentId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    receiptData = data.receipt;
+                    displayReceipt();
+                } else {
+                    alert('Error loading receipt: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error loading receipt:', error);
+                alert('Error loading receipt');
+            }
+        }
+        
+        function displayReceipt() {
+            if (!receiptData) return;
+            
+            // Update header info
+            document.getElementById('receiptNumber').textContent = `#${receiptData.payment_id}`;
+            document.getElementById('paymentDate').textContent = receiptData.payment_date;
+            document.getElementById('paymentMethod').textContent = receiptData.payment_method.toUpperCase();
+            document.getElementById('paymentMethodText').textContent = receiptData.payment_method.toUpperCase();
+            document.getElementById('totalAmount').textContent = `€${receiptData.total.toFixed(2)}`;
+            
+            // Update items list
+            const itemsList = document.getElementById('itemsList');
+            itemsList.innerHTML = '';
+            
+            receiptData.items.forEach(item => {
+                const itemRow = document.createElement('div');
+                itemRow.className = 'item-row';
+                itemRow.innerHTML = `
+                    <div>
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-details">${item.quantity}x €${item.unit_price.toFixed(2)} • ${item.date}</div>
+                    </div>
+                    <div class="item-price">€${item.total_price.toFixed(2)}</div>
+                `;
+                itemsList.appendChild(itemRow);
+            });
+        }
+        
+        function shareReceipt() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'CSH Coffee Payment Receipt',
+                    text: `Payment receipt for ${receiptData.user_name} - €${receiptData.total.toFixed(2)}`,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback: copy to clipboard
+                const receiptText = `CSH Coffee Payment Receipt
+Receipt #${receiptData.payment_id}
+Date: ${receiptData.payment_date}
+Amount: €${receiptData.total.toFixed(2)}
+Method: ${receiptData.payment_method.toUpperCase()}
+
+Items:
+${receiptData.items.map(item => `${item.quantity}x ${item.name} - €${item.total_price.toFixed(2)}`).join('\n')}
+
+Total: €${receiptData.total.toFixed(2)}
+
+Thank you for your payment!
+CSH Coffee System`;
+                
+                navigator.clipboard.writeText(receiptText).then(() => {
+                    alert('Receipt copied to clipboard!');
+                });
+            }
+        }
+        
+        function printReceipt() {
+            window.print();
+        }
+        
+        function goBackToEntries() {
+            window.location.href = "/";
+        }
+        
+        // Load receipt when page loads
+        document.addEventListener('DOMContentLoaded', loadReceipt);
+    </script>
+</body>
+</html>
